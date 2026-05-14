@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,7 +14,7 @@ class ProductBase(BaseModel):
     price: int = Field(default=0, ge=0)
     stock: int = Field(default=0, ge=0)
     description: str | None = None
-    is_active: bool = True
+    status_id: int = Field(default=1, ge=1)
 
 
 class ProductCreate(ProductBase):
@@ -30,7 +29,7 @@ class ProductUpdate(BaseModel):
     price: int | None = Field(default=None, ge=0)
     stock: int | None = Field(default=None, ge=0)
     description: str | None = None
-    is_active: bool | None = None
+    status_id: int | None = None
 
 
 class ProductResponse(ProductBase):
