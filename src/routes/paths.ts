@@ -1,26 +1,19 @@
 const PATHS = {
     root: "/",
     auth: {
-        login: "/auth/login",
-        register: "/auth/register",
+        root: "auth",
+        login: "login",
+        register: "register",
     },
-    mekarang: {
-        root: "/mekarang",
+    megarang: {
+        root: "megarang",
         products: {
-            root: "/mekarang/products",
-            detail: "/mekarang/products/:id",
-            product: (id: string) => `/mekarang/products/${id}`,
-            create: "/mekarang/products/new",
-            editPath: "/mekarang/products/:id/edit",
-            edit: (id: string) => `/mekarang/products/${id}/edit`,
+            root: "products",
+            detail: "products/:id",
         },
         orders: {
-            root: "/mekarang/orders",
-            detail: "/mekarang/orders/:id",
-            order: (id: string) => `/mekarang/orders/${id}`,
-            create: "/mekarang/orders/new",
-            editPath: "/mekarang/orders/:id/edit",
-            edit: (id: string) => `/mekarang/orders/${id}/edit`,
+            root: "orders",
+            detail: "orders/:id",
         },
     },
 

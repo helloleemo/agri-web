@@ -9,14 +9,14 @@ const appTheme = createTheme({
   },
   typography,
   components: {
-    MuiCssBaseline: {
+    // MuiCssBaseline: {
       // styleOverrides: {
       //   body: {
       //     background:
       //       "radial-gradient(circle at 8% 10%, #E7F4F1 0%, #F4F7F5 35%, #F4F7F5 100%)",
       //   },
       // },
-    },
+    // },
     MuiPaper: {
       styleOverrides: {
         root: {
