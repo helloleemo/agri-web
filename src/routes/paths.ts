@@ -13,6 +13,10 @@ const PATHS = {
     },
     orders: {
       root: 'orders',
+      query: 'orders/query',
+      info: 'orders/info',
+      payment: 'orders/payment',
+      complete: 'orders/complete',
       detail: 'orders/:id',
     },
     stories: {

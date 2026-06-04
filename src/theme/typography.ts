@@ -1,4 +1,3 @@
-
 const typography = {
   fontFamily: '"Nunito Sans", "Noto Sans TC", "Segoe UI", sans-serif',
   h1: {
@@ -14,9 +13,12 @@ const typography = {
     letterSpacing: -0.3,
   },
   button: {
-    textTransform: "none",
+    textTransform: 'none',
     fontWeight: 700,
   },
-};
+  p: {
+    cursor: 'default',
+  },
+}
 
-export default typography;
+export default typography

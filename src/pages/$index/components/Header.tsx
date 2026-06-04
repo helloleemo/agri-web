@@ -1,9 +1,10 @@
 import menuList from '@/settings/menu'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import { IconButton, Stack, Typography } from '@mui/material'
+import { Badge, Box, IconButton, Stack, Typography } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
+import { useCart } from '@/contexts/CartContext'
 
 interface HeaderProps {
   showHeaderBackground: boolean
@@ -13,6 +14,7 @@ interface HeaderProps {
 //
 
 const Header = ({ showHeaderBackground, isHeaderHovered, setIsHeaderHovered }: HeaderProps) => {
+  const { totalQuantity } = useCart()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const shouldShowHeaderBackground = showHeaderBackground || isHeaderHovered
 
@@ -57,9 +59,8 @@ const Header = ({ showHeaderBackground, isHeaderHovered, setIsHeaderHovered }: H
           }}
         >
           {menuList.map((item) => (
-            <Typography
+            <Box
               key={item.label}
-              variant="body2"
               component={RouterLink}
               to={item.link}
               sx={{
@@ -71,8 +72,25 @@ const Header = ({ showHeaderBackground, isHeaderHovered, setIsHeaderHovered }: H
                 '&:hover': { opacity: 1 },
               }}
             >
-              {item.label}
-            </Typography>
+              <Badge
+                color="error"
+                variant="dot"
+                invisible={item.label !== '購物車' || totalQuantity === 0}
+                overlap="circular"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    width: 8,
+                    minWidth: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                  },
+                }}
+              >
+                <Typography variant="body2" component="span">
+                  {item.label}
+                </Typography>
+              </Badge>
+            </Box>
           ))}
         </Stack>
         <IconButton
@@ -96,9 +114,8 @@ const Header = ({ showHeaderBackground, isHeaderHovered, setIsHeaderHovered }: H
         }}
       >
         {menuList.map((item) => (
-          <Typography
+          <Box
             key={item.label}
-            variant="body1"
             component={RouterLink}
             to={item.link}
             onClick={() => setIsMobileMenuOpen(false)}
@@ -112,8 +129,25 @@ const Header = ({ showHeaderBackground, isHeaderHovered, setIsHeaderHovered }: H
               '&:hover': { opacity: 1 },
             }}
           >
-            {item.label}
-          </Typography>
+            <Badge
+              color="error"
+              variant="dot"
+              invisible={item.label !== '購物車' || totalQuantity === 0}
+              overlap="circular"
+              sx={{
+                '& .MuiBadge-badge': {
+                  width: 8,
+                  minWidth: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                },
+              }}
+            >
+              <Typography variant="body1" component="span">
+                {item.label}
+              </Typography>
+            </Badge>
+          </Box>
         ))}
       </Stack>
     </Stack>

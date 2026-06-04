@@ -136,7 +136,7 @@ const MainPage = () => {
               order: { xs: 2, md: index % 2 === 0 ? 2 : 1 },
               display: 'grid',
               placeItems: 'center',
-              bgcolor: index % 2 === 0 ? 'grey.50' : 'grey.100',
+              bgcolor: index % 2 === 0 ? 'grey.200' : 'grey.200',
               px: 4,
               py: 8,
             }}

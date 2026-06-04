@@ -5,7 +5,7 @@ import typography from "./typography";
 const appTheme = createTheme({
   palette,
   shape: {
-    borderRadius: 12,
+    borderRadius: 5,
   },
   typography,
   components: {
@@ -28,7 +28,7 @@ const appTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 999,
+          borderRadius: 5,
           paddingInline: 18,
         },
       },

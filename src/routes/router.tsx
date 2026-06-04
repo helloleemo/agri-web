@@ -3,8 +3,14 @@ import NotFoundPage from '@/pages/NotFoundPage'
 // import Index from "../pages/Index";
 import PATHS from '@/routes/paths'
 import ProductsListPage from '@/pages/$mekarang/$products/ProductsListPage'
+import { productsListLoader } from '@/pages/$mekarang/$products/productsListLoader'
 import Layout from '@/pages/$mekarang'
 import ProductInfoPage from '@/pages/$mekarang/$products/[id]/ProductInfoPage'
+import OrdersListPage from '@/pages/$mekarang/$orders/OrdersListPage'
+import OrdersInfoPage from '@/pages/$mekarang/$orders/OrdersInfoPage'
+import OrdersPaymentPage from '@/pages/$mekarang/$orders/OrdersPaymentPage'
+import OrdersCompletePage from '@/pages/$mekarang/$orders/OrdersCompletePage'
+import OrdersQueryPage from '@/pages/$mekarang/$orders/OrdersQueryPage'
 import LoginPage from '@/pages/$auth/$login/LoginPage'
 import MainPage from '@/pages/$index/MainPage'
 
@@ -23,16 +29,37 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: `${PATHS.mekarang.root}/${PATHS.mekarang.orders.query}`,
+    element: <OrdersQueryPage />,
+  },
+  {
     path: PATHS.mekarang.root,
     element: <Layout />,
     children: [
       {
         path: PATHS.mekarang.products.root,
         element: <ProductsListPage />,
+        loader: productsListLoader,
       },
       {
         path: PATHS.mekarang.products.detail,
         element: <ProductInfoPage />,
+      },
+      {
+        path: PATHS.mekarang.orders.root,
+        element: <OrdersListPage />,
+      },
+      {
+        path: PATHS.mekarang.orders.info,
+        element: <OrdersInfoPage />,
+      },
+      {
+        path: PATHS.mekarang.orders.payment,
+        element: <OrdersPaymentPage />,
+      },
+      {
+        path: PATHS.mekarang.orders.complete,
+        element: <OrdersCompletePage />,
       },
       {
         index: true,

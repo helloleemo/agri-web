@@ -3,15 +3,16 @@ import type { PaletteOptions } from '@mui/material/styles'
 const palette: PaletteOptions = {
   mode: 'light',
   primary: {
-    main: '#d2830d',
-    light: '#fdc63b',
-    dark: '#9c4d09',
-    contrastText: '#FFFFFF',
-  },
-  secondary: {
     main: '#0e7490',
     light: '#ecfeff',
     dark: '#155e75',
+    contrastText: '#FFFFFF',
+
+  },
+  secondary: {
+    main: '#d2830d',
+    light: '#fdc63b',
+    dark: '#9c4d09',
     contrastText: '#FFFFFF',
   },
   grey: {

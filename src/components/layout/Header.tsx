@@ -1,15 +1,17 @@
 import menuList from '@/settings/menu'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
-import { IconButton, Stack, Typography } from '@mui/material'
+import { Badge, Box, IconButton, Stack, Typography } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
+import { useCart } from '@/contexts/CartContext'
 
 interface HeaderProps {
   alwaysSolidBackground?: boolean
 }
 
 const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
+  const { totalQuantity } = useCart()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showHeaderBackground, setShowHeaderBackground] = useState(true)
   const [isHeaderHovered, setIsHeaderHovered] = useState(false)
@@ -65,7 +67,14 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
       }}
     >
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 800,
+            letterSpacing: 1.2,
+            cursor: 'pointer',
+          }}
+        >
           MEKARANG
         </Typography>
         <Stack
@@ -79,9 +88,8 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
           }}
         >
           {menuList.map((item) => (
-            <Typography
+            <Box
               key={item.label}
-              variant="body2"
               component={RouterLink}
               to={item.link}
               sx={{
@@ -89,12 +97,36 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
                 textDecoration: 'none',
                 cursor: 'pointer',
                 opacity: 0.9,
-                transition: 'opacity 180ms ease',
-                '&:hover': { opacity: 1 },
+                transition: 'opacity 180ms ease, transform 180ms ease',
+                // position: 'relative',
+                // top: 10,
+                // transform: 'translateY(0)',
+                // transform: 'translateX(10)',
+                // '&:hover': { opacity: 1, transform: 'translateY(0)' },
               }}
             >
-              {item.label}
-            </Typography>
+              <Badge
+                color="error"
+                variant="dot"
+                invisible={item.label !== '購物車' || totalQuantity === 0}
+                overlap="circular"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    position: 'absolute',
+                    top: 0,
+                    right: -4,
+                    width: 10,
+                    minWidth: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                  },
+                }}
+              >
+                <Typography variant="body2" component="span">
+                  {item.label}
+                </Typography>
+              </Badge>
+            </Box>
           ))}
         </Stack>
         <IconButton
@@ -118,9 +150,8 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
         }}
       >
         {menuList.map((item) => (
-          <Typography
+          <Box
             key={item.label}
-            variant="body1"
             component={RouterLink}
             to={item.link}
             onClick={() => setIsMobileMenuOpen(false)}
@@ -134,8 +165,25 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
               '&:hover': { opacity: 1 },
             }}
           >
-            {item.label}
-          </Typography>
+            <Badge
+              color="error"
+              variant="dot"
+              invisible={item.label !== '購物車' || totalQuantity === 0}
+              overlap="circular"
+              sx={{
+                '& .MuiBadge-badge': {
+                  width: 8,
+                  minWidth: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                },
+              }}
+            >
+              <Typography variant="body1" component="span">
+                {item.label}
+              </Typography>
+            </Badge>
+          </Box>
         ))}
       </Stack>
     </Stack>
