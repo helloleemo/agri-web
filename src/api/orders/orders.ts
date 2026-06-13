@@ -12,6 +12,12 @@ export const ordersService = {
   getList: async (params?: PaginationParams) => {
     return GET<OrderResponse[]>(BASE_URL, API_ENDPOINT.ORDERS, params)
   },
+  queryByOrderNoAndEmail: async (orderNo: string, email: string) => {
+    return GET<OrderResponse>(BASE_URL, API_ENDPOINT.ORDERS_QUERY, {
+      order_no: orderNo,
+      email,
+    })
+  },
   getById: async (id: string) => {
     return GET<OrderResponse>(BASE_URL, API_ENDPOINT.ORDERS_ID(id))
   },
@@ -23,5 +29,8 @@ export const ordersService = {
   },
   delete: async (id: string) => {
     return DELETE<DeletedData>(BASE_URL, API_ENDPOINT.ORDERS_ID(id))
+  },
+  cancel: async (id: string) => {
+    return PATCH<OrderResponse>(BASE_URL, API_ENDPOINT.ORDERS_CANCEL(id))
   },
 }

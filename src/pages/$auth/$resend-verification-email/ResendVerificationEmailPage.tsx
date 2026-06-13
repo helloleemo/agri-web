@@ -75,9 +75,9 @@ const ResendVerificationEmailPage = () => {
           </Button>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
-            <Button component={RouterLink} to="/auth/verify-email" variant="outlined" fullWidth>
+            {/* <Button component={RouterLink} to="/auth/verify-email" variant="outlined" fullWidth>
               前往驗證頁
-            </Button>
+            </Button> */}
             <Button component={RouterLink} to="/auth/login" variant="outlined" fullWidth>
               返回登入
             </Button>

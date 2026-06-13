@@ -17,7 +17,9 @@ export const API_ENDPOINT = {
 
   // orders
   ORDERS: '/orders',
+  ORDERS_QUERY: '/orders/query',
   ORDERS_ID: (id: string) => `/orders/${id}`,
+  ORDERS_CANCEL: (id: string) => `/orders/${id}/cancel`,
 
   // categories
   CATEGORIES: '/categories',

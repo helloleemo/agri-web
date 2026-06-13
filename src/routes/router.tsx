@@ -11,6 +11,7 @@ import OrdersInfoPage from '@/pages/$mekarang/$orders/$info/OrdersInfoPage'
 import OrdersPaymentPage from '@/pages/$mekarang/$orders/$payment/OrdersPaymentPage'
 import OrdersCompletePage from '@/pages/$mekarang/$orders/$complete/OrdersCompletePage'
 import OrdersQueryPage from '@/pages/$mekarang/$orders/OrdersQueryPage'
+import OrdersHistoryPage from '@/pages/$mekarang/OrdersHistoryPage'
 import LoginPage from '@/pages/$auth/$login/LoginPage'
 import RegisterPage from '../pages/$auth/$register/RegisterPage'
 import VerifyEmailPage from '../pages/$auth/$verify-email/VerifyEmailPage'
@@ -75,6 +76,10 @@ const router = createBrowserRouter([
       {
         path: PATHS.mekarang.orders.complete,
         element: <OrdersCompletePage />,
+      },
+      {
+        path: PATHS.mekarang.orders.history,
+        element: <OrdersHistoryPage />,
       },
       {
         index: true,

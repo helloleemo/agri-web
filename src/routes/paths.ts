@@ -16,6 +16,7 @@ const PATHS = {
     orders: {
       root: 'orders',
       query: 'orders/query',
+      history: 'orders/history',
       info: 'orders/info',
       payment: 'orders/payment',
       complete: 'orders/complete',

@@ -14,49 +14,43 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useMemo, useState } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useCart } from '@/contexts/CartContext'
 import PATHS from '@/routes/paths'
+import {
+  type BuyerForm,
+  type ReceiverForm,
+  readCheckoutDraft,
+  writeCheckoutDraft,
+} from '../checkoutDraft'
 
-interface ContactForm {
-  name: string
-  phone: string
-  email: string
-  note: string
-}
-
-interface ReceiverForm {
-  name: string
-  phone: string
-  address: string
-  shippingMethod: string
-  paymentMethod: string
-}
-
-const emptyBuyer: ContactForm = {
-  name: '',
-  phone: '',
-  email: '',
-  note: '',
-}
-
-const emptyReceiver: ReceiverForm = {
-  name: '',
-  phone: '',
-  address: '',
-  shippingMethod: '宅配',
-  paymentMethod: '匯款',
-}
+const EMAIL_PATTERN = /^\S+@\S+\.\S+$/
 
 const OrdersInfoPage = () => {
-  const [buyer, setBuyer] = useState<ContactForm>(emptyBuyer)
-  const [receiver, setReceiver] = useState<ReceiverForm>(emptyReceiver)
+  const navigate = useNavigate()
+  const { items } = useCart()
+  const [buyer, setBuyer] = useState<BuyerForm>(() => readCheckoutDraft().buyer)
+  const [receiver, setReceiver] = useState<ReceiverForm>(() => readCheckoutDraft().receiver)
   const [sameAsBuyer, setSameAsBuyer] = useState(false)
 
   const canContinue = useMemo(() => {
-    const buyerValid = buyer.name.trim() && buyer.phone.trim() && buyer.email.trim()
+    const buyerValid =
+      buyer.name.trim() &&
+      buyer.phone.trim() &&
+      buyer.email.trim() &&
+      EMAIL_PATTERN.test(buyer.email.trim())
     const receiverValid = receiver.name.trim() && receiver.phone.trim() && receiver.address.trim()
-    return Boolean(buyerValid && receiverValid)
+    return Boolean(items.length > 0 && buyerValid && receiverValid)
+  }, [buyer, receiver, items.length])
+
+  useEffect(() => {
+    const draft = readCheckoutDraft()
+    writeCheckoutDraft({
+      ...draft,
+      buyer,
+      receiver,
+    })
   }, [buyer, receiver])
 
   const handleSameAsBuyer = (checked: boolean) => {
@@ -69,6 +63,21 @@ const OrdersInfoPage = () => {
         phone: buyer.phone,
       }))
     }
+  }
+
+  const continueToPayment = () => {
+    if (!canContinue) {
+      return
+    }
+
+    const draft = readCheckoutDraft()
+    writeCheckoutDraft({
+      ...draft,
+      buyer,
+      receiver,
+    })
+
+    navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.payment}`)
   }
 
   return (
@@ -154,8 +163,11 @@ const OrdersInfoPage = () => {
             />
             <TextField
               label="Email"
+              type="email"
+              required
               size="small"
               value={buyer.email}
+              helperText="無論是否註冊，下單皆需填寫 Email"
               onChange={(event) => setBuyer((prev) => ({ ...prev, email: event.target.value }))}
             />
             <TextField
@@ -217,12 +229,14 @@ const OrdersInfoPage = () => {
                 size="small"
                 value={receiver.shippingMethod}
                 onChange={(event) =>
-                  setReceiver((prev) => ({ ...prev, shippingMethod: event.target.value }))
+                  setReceiver((prev) => ({
+                    ...prev,
+                    shippingMethod: event.target.value as ReceiverForm['shippingMethod'],
+                  }))
                 }
               >
                 <MenuItem value="宅配">宅配</MenuItem>
-                <MenuItem value="超商取貨">超商取貨</MenuItem>
-                <MenuItem value="面交">面交</MenuItem>
+                <MenuItem value="其他">其他</MenuItem>
               </Select>
             </Stack>
 
@@ -234,12 +248,15 @@ const OrdersInfoPage = () => {
                 size="small"
                 value={receiver.paymentMethod}
                 onChange={(event) =>
-                  setReceiver((prev) => ({ ...prev, paymentMethod: event.target.value }))
+                  setReceiver((prev) => ({
+                    ...prev,
+                    paymentMethod: event.target.value as ReceiverForm['paymentMethod'],
+                  }))
                 }
               >
                 <MenuItem value="匯款">匯款</MenuItem>
-                <MenuItem value="貨到付款">貨到付款</MenuItem>
-                <MenuItem value="線上刷卡">線上刷卡</MenuItem>
+                <MenuItem value="面交">面交</MenuItem>
+                <MenuItem value="Line Pay">Line Pay</MenuItem>
               </Select>
             </Stack>
 
@@ -248,9 +265,9 @@ const OrdersInfoPage = () => {
                 匯款方式：下一步將顯示匯款帳號資訊。
               </Typography>
             )}
-            {receiver.paymentMethod === '線上刷卡' && (
+            {receiver.paymentMethod === 'Line Pay' && (
               <Typography sx={{ color: 'error.main', fontSize: '0.82rem', lineHeight: 1.6 }}>
-                線上刷卡：下一步將導向付款頁面。
+                Line Pay：下一步將導向付款資訊與訂單狀態。
               </Typography>
             )}
           </Stack>
@@ -272,8 +289,7 @@ const OrdersInfoPage = () => {
             variant="contained"
             color="secondary"
             disabled={!canContinue}
-            component={RouterLink}
-            to={`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.payment}`}
+            onClick={continueToPayment}
             sx={{ minWidth: 220 }}
           >
             下一步，選擇付款方式

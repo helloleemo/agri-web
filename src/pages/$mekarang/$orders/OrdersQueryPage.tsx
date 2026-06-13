@@ -1,6 +1,7 @@
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ordersService } from '@/api'
 import Header from '@/components/layout/Header'
 import PATHS from '@/routes/paths'
 
@@ -10,20 +11,62 @@ const heroImage =
 const OrdersQueryPage = () => {
   const navigate = useNavigate()
   const [orderNumber, setOrderNumber] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [email, setEmail] = useState('')
+  const [orderNumberError, setOrderNumberError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const onSubmit = () => {
-    const trimmed = orderNumber.trim()
+  const validate = (trimmedOrderNo: string, trimmedEmail: string) => {
+    let valid = true
 
-    if (!trimmed) {
-      setErrorMessage('請輸入訂單編號')
+    if (!trimmedOrderNo) {
+      setOrderNumberError('請輸入訂單編號')
+      valid = false
+    } else {
+      setOrderNumberError('')
+    }
+
+    if (!trimmedEmail) {
+      setEmailError('請輸入 Email')
+      valid = false
+    } else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      setEmailError('Email 格式不正確')
+      valid = false
+    } else {
+      setEmailError('')
+    }
+
+    return valid
+  }
+
+  const onSubmit = async () => {
+    if (isSubmitting) {
       return
     }
 
-    setErrorMessage('')
+    const trimmedOrderNo = orderNumber.trim()
+    const trimmedEmail = email.trim().toLowerCase()
+    const isValid = validate(trimmedOrderNo, trimmedEmail)
 
-    // Temporarily route to complete page. Replace with real lookup once backend query API is wired.
-    navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.complete}`)
+    if (!isValid) {
+      return
+    }
+
+    setSubmitError('')
+    setIsSubmitting(true)
+
+    try {
+      const order = await ordersService.queryByOrderNoAndEmail(trimmedOrderNo, trimmedEmail)
+
+      navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.complete}`, {
+        state: { queriedOrder: order },
+      })
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : '訂單查詢失敗，請稍後再試')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -52,34 +95,59 @@ const OrdersQueryPage = () => {
             </Typography>
 
             <Typography sx={{ color: 'text.secondary', lineHeight: 1.9 }}>
-              輸入你的訂單編號，立即查看付款狀態、配送進度與收件資訊。
+              輸入你的訂單編號與 Email，立即查看付款狀態、配送進度與收件資訊。
               若你剛完成下單，也可以在這裡快速追蹤最新處理狀態。
             </Typography>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
+            <Stack spacing={1.2}>
               <TextField
                 fullWidth
                 size="small"
                 placeholder="請輸入訂單編號"
                 value={orderNumber}
                 onChange={(event) => setOrderNumber(event.target.value)}
-                error={Boolean(errorMessage)}
-                helperText={errorMessage || ''}
+                error={Boolean(orderNumberError)}
+                helperText={orderNumberError || ''}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
-                    onSubmit()
+                    void onSubmit()
                   }
                 }}
               />
-              <Button
-                variant="contained"
-                color="secondary"
+              <TextField
+                fullWidth
                 size="small"
-                sx={{ minWidth: 96, height: 40 }}
-                onClick={onSubmit}
-              >
-                查詢
-              </Button>
+                type="email"
+                placeholder="請輸入下單 Email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                error={Boolean(emailError)}
+                helperText={emailError || '請輸入訂購時使用的Email'}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    void onSubmit()
+                  }
+                }}
+              />
+              {submitError && (
+                <Typography sx={{ color: 'error.main', fontSize: '0.85rem' }}>
+                  {submitError}
+                </Typography>
+              )}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  sx={{ minWidth: 96, height: 40 }}
+                  onClick={() => {
+                    void onSubmit()
+                  }}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? '查詢中...' : '查詢'}
+                </Button>
+              </Stack>
             </Stack>
           </Stack>
         </Box>

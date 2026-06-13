@@ -11,40 +11,45 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useCart } from '@/contexts/CartContext'
 import PATHS from '@/routes/paths'
+import { clearCheckoutDraft, readCheckoutDraft, writeCheckoutDraft } from './checkoutDraft'
 
 const formatter = new Intl.NumberFormat('zh-TW')
 
 const OrdersListPage = () => {
   const { items, totalQuantity, updateItemQuantity, removeItem, clearCart } = useCart()
-  const [couponInput, setCouponInput] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState('')
+  const [couponInput, setCouponInput] = useState(() => readCheckoutDraft().couponCode)
+  const [appliedCoupon, setAppliedCoupon] = useState(() => readCheckoutDraft().couponCode)
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items],
   )
 
-  const discount = useMemo(() => {
-    if (appliedCoupon.trim().toUpperCase() === 'MEKARANG100' && subtotal >= 1000) {
-      return 100
-    }
-    return 0
-  }, [appliedCoupon, subtotal])
+  const grandTotal = subtotal
 
-  const grandTotal = Math.max(0, subtotal - discount)
+  useEffect(() => {
+    const draft = readCheckoutDraft()
+    writeCheckoutDraft({
+      ...draft,
+      couponCode: appliedCoupon,
+    })
+  }, [appliedCoupon])
 
   const clearCartAndCoupon = () => {
     clearCart()
     setCouponInput('')
     setAppliedCoupon('')
+    clearCheckoutDraft()
   }
 
   const applyCoupon = () => {
-    setAppliedCoupon(couponInput)
+    const normalizedCoupon = couponInput.trim().toUpperCase()
+    setCouponInput(normalizedCoupon)
+    setAppliedCoupon(normalizedCoupon)
   }
 
   return (
@@ -251,9 +256,10 @@ const OrdersListPage = () => {
             <TextField
               fullWidth
               size="small"
-              placeholder="折扣碼（例：MEKARANG100）"
+              placeholder="折扣碼"
               value={couponInput}
               onChange={(event) => setCouponInput(event.target.value)}
+              helperText="折扣金額將在建立訂單時由系統驗證並計算"
             />
             <Button variant="outlined" onClick={applyCoupon} sx={{ minWidth: 96 }}>
               確認
@@ -266,8 +272,8 @@ const OrdersListPage = () => {
             </Stack>
             <Stack direction="row" sx={{ justifyContent: 'space-between', py: 0.8 }}>
               <Typography color="text.secondary">折扣</Typography>
-              <Typography color={discount > 0 ? 'success.main' : 'text.primary'}>
-                - $ {formatter.format(discount)}
+              <Typography color="text.secondary">
+                送出訂單後計算
               </Typography>
             </Stack>
             <Stack
@@ -303,11 +309,18 @@ const OrdersListPage = () => {
             disabled={items.length === 0}
             component={RouterLink}
             to={`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.info}`}
+            onClick={applyCoupon}
             sx={{ minWidth: 220 }}
           >
             確認，繼續填寫寄送資訊
           </Button>
         </Stack>
+
+        {appliedCoupon && (
+          <Typography sx={{ mt: 1.5, textAlign: 'right', color: 'success.main', fontSize: '0.9rem' }}>
+            已套用折扣碼：{appliedCoupon}
+          </Typography>
+        )}
       </Container>
     </Box>
   )
