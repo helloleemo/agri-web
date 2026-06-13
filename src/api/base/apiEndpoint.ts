@@ -4,6 +4,8 @@ export const API_ENDPOINT = {
   LOGIN: '/auth/login',
   GET_USER_INFO: '/auth/me',
   REGISTER: '/auth/register',
+  VERIFY_EMAIL: '/auth/verify-email',
+  RESEND_VERIFICATION_EMAIL: '/auth/resend-verification-email',
 
   // products
   PRODUCTS: '/products',

@@ -4,6 +4,8 @@ const PATHS = {
     root: 'auth',
     login: 'login',
     register: 'register',
+    verifyEmail: 'verify-email',
+    resendVerificationEmail: 'resend-verification-email',
   },
   mekarang: {
     root: 'mekarang',

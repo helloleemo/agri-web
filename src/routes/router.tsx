@@ -12,6 +12,9 @@ import OrdersPaymentPage from '@/pages/$mekarang/$orders/$payment/OrdersPaymentP
 import OrdersCompletePage from '@/pages/$mekarang/$orders/$complete/OrdersCompletePage'
 import OrdersQueryPage from '@/pages/$mekarang/$orders/OrdersQueryPage'
 import LoginPage from '@/pages/$auth/$login/LoginPage'
+import RegisterPage from '../pages/$auth/$register/RegisterPage'
+import VerifyEmailPage from '../pages/$auth/$verify-email/VerifyEmailPage'
+import ResendVerificationEmailPage from '../pages/$auth/$resend-verification-email/ResendVerificationEmailPage'
 import MainPage from '@/pages/$index/MainPage'
 
 const router = createBrowserRouter([
@@ -25,6 +28,18 @@ const router = createBrowserRouter([
       {
         path: PATHS.auth.login,
         element: <LoginPage />,
+      },
+      {
+        path: PATHS.auth.register,
+        element: <RegisterPage />,
+      },
+      {
+        path: PATHS.auth.verifyEmail,
+        element: <VerifyEmailPage />,
+      },
+      {
+        path: PATHS.auth.resendVerificationEmail,
+        element: <ResendVerificationEmailPage />,
       },
     ],
   },

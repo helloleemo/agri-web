@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { Box, Button, Container, Grid, Typography } from '@mui/material'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
+import { useSearchParams } from 'react-router-dom'
 import { Header, Footer } from '@/components/layout'
+import { useAuth } from '@/contexts/AuthContext'
 // import {Typography as themeTypography} from "../../theme/typography";
 
 const heroImage =
@@ -45,6 +48,17 @@ const flowItems = [
 ]
 
 const MainPage = () => {
+  const [searchParams] = useSearchParams()
+  const { openLoginDialog } = useAuth()
+
+  useEffect(() => {
+    if (searchParams.get('verified') !== 'success') {
+      return
+    }
+
+    openLoginDialog()
+  }, [openLoginDialog, searchParams])
+
   return (
     <Box sx={{ bgcolor: 'background.default', color: 'text.primary' }}>
       <Box
