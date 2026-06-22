@@ -1,7 +1,6 @@
 import BASE_URL from '../base/apiBaseUrl'
 import { API_ENDPOINT } from '../base/apiEndpoint'
 import { GET, PUT } from '../base/apiMethods'
-import type { CartItem } from '@/contexts/CartContext'
 
 export interface CartItemInput {
   product_id: string
