@@ -7,6 +7,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import LoginDialog from '@/components/auth/LoginDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCart } from '@/contexts/CartContext'
+import { useAppSnackbar } from '@/contexts/SnackbarContext'
 import PATHS from '@/routes/paths'
 
 interface HeaderProps {
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
   const navigate = useNavigate()
+  const { showSnackbar } = useAppSnackbar()
   const { totalQuantity } = useCart()
   const { isAuthenticated, user, clearAuthSession, openLoginDialog } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -55,6 +57,8 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
   const handleLogout = () => {
     setIsMobileMenuOpen(false)
     clearAuthSession()
+    showSnackbar('已成功登出', { severity: 'success' })
+    navigate(PATHS.root, { replace: true })
   }
 
   const handleOrderMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -88,6 +92,7 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
           left: 0,
           right: 0,
           zIndex: 1200,
+          color: 'rgba(244, 237, 223, 0.95)',
           px: { xs: 3, md: 6 },
           py: 2,
           mx: 'auto',

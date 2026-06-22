@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink, useLoaderData } from 'react-router-dom'
+import { resolveApiAssetUrl } from '@/api/utils'
 import { useCart } from '@/contexts/CartContext'
 import { useAppSnackbar } from '@/contexts/SnackbarContext'
 import PATHS from '@/routes/paths'
@@ -30,7 +31,8 @@ const pickImage = (product: ProductResponse) => {
   }
 
   const primary = product.images.find((image) => image.is_primary)
-  return primary?.file_url || product.images[0].file_url || FALLBACK_IMAGE
+  const rawUrl = primary?.file_url || product.images[0].file_url || FALLBACK_IMAGE
+  return resolveApiAssetUrl(rawUrl)
 }
 
 const pickPrice = (product: ProductResponse) => {
@@ -59,6 +61,7 @@ const ProductsListPage = () => {
         id: `${product.id}-${defaultUnit.unit_id}`,
         name: product.name,
         description: product.description || '此商品目前尚未提供詳細描述。',
+        unit_id: defaultUnit.unit_id,
         unit: defaultUnit.unit_name || '規格未命名',
         unitPrice: defaultUnit.price,
         quantity: 1,

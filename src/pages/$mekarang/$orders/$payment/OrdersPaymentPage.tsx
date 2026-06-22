@@ -25,6 +25,16 @@ const extractProductId = (cartItemId: string): string | null => {
   return match ? match[0] : null
 }
 
+const extractUnitId = (cartItemId: string): string | null => {
+  const matches = cartItemId.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi,
+  )
+  if (!matches || matches.length < 2) {
+    return null
+  }
+  return matches[1]
+}
+
 const OrdersPaymentPage = () => {
   const navigate = useNavigate()
   const { items, clearCart } = useCart()
@@ -37,16 +47,23 @@ const OrdersPaymentPage = () => {
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items],
   )
+  const shippingFee = checkoutDraft.receiver.shippingMethod === '宅配' ? 120 : 0
+  const totalAmount = subtotal + shippingFee
 
   const createOrderPayload = (): OrderCreatePayload => {
     const mappedItems = items.map((item) => {
       const productId = extractProductId(item.id)
+      const unitId = item.unit_id || extractUnitId(item.id)
       if (!productId) {
         throw new Error(`購物車商品識別格式錯誤：${item.name}`)
+      }
+      if (!unitId) {
+        throw new Error(`購物車商品規格識別格式錯誤：${item.name}`)
       }
 
       return {
         product_id: productId,
+        unit_id: unitId,
         unit: item.unit,
         quantity: item.quantity,
       }
@@ -86,7 +103,7 @@ const OrdersPaymentPage = () => {
       clearCheckoutDraft()
       showSnackbar(`訂單 ${createdOrder.order_no} 建立成功`, { severity: 'success' })
 
-      navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.complete}`, {
+      navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.root}/${createdOrder.id}`, {
         state: { createdOrder },
       })
     } catch (error) {
@@ -146,6 +163,56 @@ const OrdersPaymentPage = () => {
           付款資料
         </Typography>
 
+        <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1.2 }}>商品明細</Typography>
+        <Stack
+          spacing={1.2}
+          sx={{
+            mb: 3,
+            p: 2,
+            border: '1px solid',
+            borderColor: 'grey.300',
+            borderRadius: 2,
+          }}
+        >
+          {items.length ? (
+            items.map((item) => {
+              const lineTotal = item.unitPrice * item.quantity
+
+              return (
+                <Stack
+                  key={item.id}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={0.8}
+                  sx={{
+                    justifyContent: 'space-between',
+                    py: 1,
+                    borderBottom: '1px solid',
+                    borderColor: 'grey.200',
+                    '&:last-of-type': { borderBottom: 'none', pb: 0 },
+                  }}
+                >
+                  <Stack spacing={0.4} sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      {item.name}
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.88rem' }}>
+                      規格：{item.unit}
+                    </Typography>
+                  </Stack>
+                  <Typography
+                    sx={{ color: 'text.secondary', fontSize: '0.9rem', textAlign: 'right' }}
+                  >
+                    {item.quantity} x $ {formatter.format(item.unitPrice)} = ${' '}
+                    {formatter.format(lineTotal)}
+                  </Typography>
+                </Stack>
+              )
+            })
+          ) : (
+            <Typography sx={{ color: 'text.secondary' }}>目前沒有商品</Typography>
+          )}
+        </Stack>
+
         <Stack
           spacing={1.1}
           sx={{
@@ -165,6 +232,18 @@ const OrdersPaymentPage = () => {
             商品小計：
             <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
               $ {formatter.format(subtotal)}
+            </Typography>
+          </Typography>
+          <Typography>
+            運費：
+            <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              $ {formatter.format(shippingFee)}
+            </Typography>
+          </Typography>
+          <Typography>
+            訂單總計：
+            <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              $ {formatter.format(totalAmount)}
             </Typography>
           </Typography>
           <Typography>
@@ -193,7 +272,7 @@ const OrdersPaymentPage = () => {
             </Typography>
           </Typography>
 
-          <Typography>
+          {/* <Typography>
             一般戶名：
             <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
               Mekarang Fruits
@@ -222,13 +301,10 @@ const OrdersPaymentPage = () => {
             <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
               美卡榮有限公司
             </Typography>
-          </Typography>
+          </Typography> */}
 
           <Typography sx={{ color: 'error.main', mt: 1 }}>
-            匯款後請於 24 小時內回填末五碼，逾時系統將自動取消本筆訂單。
-          </Typography>
-          <Typography sx={{ color: 'error.main' }}>
-            如使用 Line Pay，送出後可直接在下一頁查看付款與訂單狀態。
+            請確認以上訂單資訊無誤後送出，送出後將無法修改訂單內容。
           </Typography>
 
           {submitError && <Typography sx={{ color: 'error.main' }}>{submitError}</Typography>}

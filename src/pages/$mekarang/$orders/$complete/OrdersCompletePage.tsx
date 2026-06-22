@@ -1,7 +1,21 @@
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
-import { Alert, Box, Breadcrumbs, Button, Container, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Breadcrumbs,
+  Button,
+  CircularProgress,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useEffect, useState } from 'react'
-import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useParams } from 'react-router-dom'
 import type { OrderResponse } from '@/api'
 import { ordersService } from '@/api'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
@@ -12,13 +26,13 @@ const formatter = new Intl.NumberFormat('zh-TW')
 
 const ORDER_STATUS_CODE = {
   ORDER_CREATED: 1,
-  ORDER_CONFIRMED: 2,
-  PENDING_PAYMENT: 3,
-  PAID: 4,
-  PREPARING: 5,
-  SHIPPING: 6,
-  CANCELED: 7,
-  DELIVERED: 8,
+  ORDER_CONFIRMED_AND_PENDING_PAYMENT: 2,
+  PAID_AND_PREPARING: 3,
+  SHIPPING: 4,
+  DELIVERED: 5,
+  CANCELED: 6,
+  REFUNDED: 7,
+  OTHER: 99,
 } as const
 
 const ORDER_FLOW = [
@@ -30,32 +44,18 @@ const ORDER_FLOW = [
     notice: '您的訂單已成立，待確認後會提供付款資訊，請留意信箱通知。',
   },
   {
-    code: ORDER_STATUS_CODE.ORDER_CONFIRMED,
-    title: '訂單確認',
-    description: '管理員已確認訂單，並寄發匯款資訊。',
-    statusLabel: '訂單已確認',
-    notice: '管理員已確認你的訂單，請依信件中的匯款資訊完成付款。',
+    code: ORDER_STATUS_CODE.ORDER_CONFIRMED_AND_PENDING_PAYMENT,
+    title: '確認待付款',
+    description: '管理員已確認訂單，請由信件中匯款資訊完成付款。',
+    statusLabel: '確認訂單待付款',
+    notice: '管理員已確認你的訂單，請由信件中匯款資訊完成付款。',
   },
   {
-    code: ORDER_STATUS_CODE.PENDING_PAYMENT,
-    title: '待付款',
-    description: '請依匯款資訊完成付款。',
-    statusLabel: '待付款',
-    notice: '請依信件中的匯款資訊完成付款，完成後會進入備貨流程。',
-  },
-  {
-    code: ORDER_STATUS_CODE.PAID,
-    title: '已付款',
-    description: '已收到付款，等待管理員後續作業。',
-    statusLabel: '已付款',
-    notice: '已收到付款，等待管理員後續作業。',
-  },
-  {
-    code: ORDER_STATUS_CODE.PREPARING,
+    code: ORDER_STATUS_CODE.PAID_AND_PREPARING,
     title: '備貨中',
-    description: '管理員已確認款項，商品正在備貨。',
-    statusLabel: '備貨中',
-    notice: '管理員已確認款項，商品正在備貨。',
+    description: '已收到付款，商品正在備貨。',
+    statusLabel: '已付款備貨中',
+    notice: '已收到付款，商品正在備貨。',
   },
   {
     code: ORDER_STATUS_CODE.SHIPPING,
@@ -135,22 +135,31 @@ interface OrdersCompleteLocationState {
 
 const OrdersCompletePage = () => {
   const location = useLocation()
+  const { id: orderIdFromPath } = useParams<{ id: string }>()
   const { isAuthenticated, openLoginDialog } = useAuth()
   const state = (location.state as OrdersCompleteLocationState | null) ?? null
   const orderFromState = state?.createdOrder ?? state?.queriedOrder
 
   const [latestOrder, setLatestOrder] = useState<OrderResponse | null>(null)
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false)
+  const [loadOrderError, setLoadOrderError] = useState('')
   const [refreshVersion, setRefreshVersion] = useState(0)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
 
   const [isCanceling, setIsCanceling] = useState(false)
   const [cancelError, setCancelError] = useState('')
   const [cancelSuccess, setCancelSuccess] = useState(false)
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
+  const [transferLast5, setTransferLast5] = useState('')
+  const [transferError, setTransferError] = useState('')
+  const [transferSuccess, setTransferSuccess] = useState('')
+  const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
 
+  const resolvedOrderId = orderIdFromPath ?? orderFromState?.id
   const order = latestOrder ?? orderFromState
 
   useEffect(() => {
-    if (!orderFromState?.id) {
+    if (!resolvedOrderId) {
       return
     }
 
@@ -158,12 +167,21 @@ const OrdersCompletePage = () => {
 
     const fetchLatestOrder = async () => {
       try {
-        const latestOrder = await ordersService.getById(orderFromState.id)
+        setIsLoadingOrder(true)
+        setLoadOrderError('')
+        const latestOrder = await ordersService.getById(resolvedOrderId)
         if (isMounted) {
           setLatestOrder(latestOrder)
         }
-      } catch {
-        // Keep current data when refresh fails to avoid breaking the page.
+      } catch (error) {
+        if (isMounted) {
+          setLoadOrderError(error instanceof Error ? error.message : '載入訂單資料失敗')
+          // Keep current data when refresh fails to avoid breaking the page.
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingOrder(false)
+        }
       }
     }
 
@@ -172,7 +190,7 @@ const OrdersCompletePage = () => {
     return () => {
       isMounted = false
     }
-  }, [orderFromState?.id, refreshVersion])
+  }, [resolvedOrderId, refreshVersion])
 
   const progressSteps = getProgressSteps(order?.order_status_code)
 
@@ -210,18 +228,61 @@ const OrdersCompletePage = () => {
     }
   }
 
-  const orderNo = order?.order_no ?? 'OC202606040001'
+  const orderNo = order?.order_no ?? '-'
   const orderDate = order
     ? new Date(order.created_at).toLocaleString('zh-TW', { hour12: false })
-    : '2026/06/04 14:20'
+    : '-'
   const orderStatus = getStatusLabel(order)
-  const customerEmail = order?.customer_email ?? 'example@email.com'
-  const paymentMethod = order?.payment_method_label ?? '匯款'
-  const deliveryMethod = order?.delivery_method_label ?? '宅配'
+  const customerEmail = order?.customer_email ?? '-'
+  const paymentMethod = order?.payment_method_label ?? '-'
+  const deliveryMethod = order?.delivery_method_label ?? '-'
+  const shippingFee = order?.shipping_fee ?? 0
+  const displayedTotalAmount = order?.total_amount ?? 0
+  const canSubmitTransferLast5 =
+    order?.order_status_code === ORDER_STATUS_CODE.ORDER_CONFIRMED_AND_PENDING_PAYMENT &&
+    order?.payment_method === 1
+
+  const handleSubmitTransferLast5 = async () => {
+    if (!order) {
+      return
+    }
+
+    const normalizedLast5 = transferLast5.trim()
+    if (!/^\d{5}$/.test(normalizedLast5)) {
+      setTransferError('請輸入 5 碼數字')
+      return
+    }
+
+    try {
+      setIsSubmittingTransfer(true)
+      setTransferError('')
+      await ordersService.submitBankTransferLast5(order.id, {
+        bank_transfer_last5: normalizedLast5,
+        customer_email: order.customer_email,
+      })
+      setTransferSuccess('已送出匯款後五碼，管理員將收到通知。')
+      setIsTransferDialogOpen(false)
+      setRefreshVersion((prev) => prev + 1)
+    } catch (error) {
+      setTransferError(error instanceof Error ? error.message : '送出後五碼失敗，請稍後再試')
+    } finally {
+      setIsSubmittingTransfer(false)
+    }
+  }
 
   return (
     <Box component="main" sx={{ py: { xs: 5, md: 7 } }}>
       <Container maxWidth="lg">
+        {isLoadingOrder && !order && (
+          <Stack sx={{ py: 4, alignItems: 'center' }}>
+            <CircularProgress size={28} />
+          </Stack>
+        )}
+        {!isLoadingOrder && !order && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            {loadOrderError || '找不到對應訂單，請重新查詢訂單編號與 Email。'}
+          </Alert>
+        )}
         <Breadcrumbs sx={{ mb: 4, color: 'text.secondary', fontSize: '0.82rem' }}>
           <Typography
             component={RouterLink}
@@ -237,7 +298,7 @@ const OrdersCompletePage = () => {
           >
             購物車
           </Typography>
-          <Typography color="text.primary">訂單完成</Typography>
+          <Typography color="text.primary">訂單詳情</Typography>
         </Breadcrumbs>
         <Box
           sx={{
@@ -339,6 +400,10 @@ const OrdersCompletePage = () => {
           <Stack spacing={1.5} sx={{ mb: 2 }}>
             {cancelSuccess && <Alert severity="success">訂單已取消，狀態已即時更新。</Alert>}
             {cancelError && <Alert severity="error">{cancelError}</Alert>}
+            {transferSuccess && <Alert severity="success">{transferSuccess}</Alert>}
+            {transferError && !isTransferDialogOpen && (
+              <Alert severity="error">{transferError}</Alert>
+            )}
           </Stack>
           <Stack
             direction="row"
@@ -380,7 +445,23 @@ const OrdersCompletePage = () => {
             <Typography>日期：{orderDate}</Typography>
             <Typography>付款方式：{paymentMethod}</Typography>
             <Typography>配送方式：{deliveryMethod}</Typography>
-            <Typography>狀態：{orderStatus}</Typography>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography> 狀態：{orderStatus}</Typography>{' '}
+              {canSubmitTransferLast5 && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => {
+                    setTransferError('')
+                    setTransferSuccess('')
+                    setTransferLast5(order?.bank_transfer_last5 ?? '')
+                    setIsTransferDialogOpen(true)
+                  }}
+                >
+                  填寫匯款後五碼
+                </Button>
+              )}
+            </Box>
             <Typography>顧客信箱：{customerEmail}</Typography>
             <Typography>
               訂購人資訊：{order?.orderer_name || '-'} / {order?.orderer_phone || '-'}
@@ -389,6 +470,7 @@ const OrdersCompletePage = () => {
               收件資訊：{order?.customer_name || '-'} / {order?.address || '-'}
             </Typography>
             {order?.coupon_code && <Typography>折扣碼：{order.coupon_code}</Typography>}
+            <Typography>匯款後五碼：{order?.bank_transfer_last5 || '-'}</Typography>
           </Stack>
 
           {order && (
@@ -437,9 +519,13 @@ const OrdersCompletePage = () => {
                   </Typography>
                 </Stack>
                 <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+                  <Typography color="text.secondary">運費</Typography>
+                  <Typography>$ {formatter.format(shippingFee)}</Typography>
+                </Stack>
+                <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
                   <Typography sx={{ fontWeight: 800 }}>總計</Typography>
                   <Typography sx={{ fontWeight: 800 }}>
-                    $ {formatter.format(order.total_amount)}
+                    $ {formatter.format(displayedTotalAmount)}
                   </Typography>
                 </Stack>
               </Stack>
@@ -459,6 +545,46 @@ const OrdersCompletePage = () => {
         onClose={() => setIsCancelConfirmOpen(false)}
         onConfirm={handleCancelOrder}
       />
+
+      <Dialog
+        open={isTransferDialogOpen}
+        onClose={isSubmittingTransfer ? undefined : () => setIsTransferDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>輸入匯款後五碼</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={1.2} sx={{ pt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              狀態為「確認待付款」時可提交匯款帳號後五碼給管理員核對。
+            </Typography>
+            <TextField
+              label="匯款後五碼"
+              value={transferLast5}
+              onChange={(event) => {
+                setTransferLast5(event.target.value.replace(/\D/g, '').slice(0, 5))
+                setTransferError('')
+              }}
+              placeholder="例如：12345"
+              slotProps={{ htmlInput: { inputMode: 'numeric', pattern: '\\d{5}', maxLength: 5 } }}
+              fullWidth
+            />
+            {transferError ? <Alert severity="error">{transferError}</Alert> : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsTransferDialogOpen(false)} disabled={isSubmittingTransfer}>
+            取消
+          </Button>
+          <Button
+            onClick={() => void handleSubmitTransferLast5()}
+            variant="contained"
+            disabled={isSubmittingTransfer}
+          >
+            {isSubmittingTransfer ? '送出中...' : '送出'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

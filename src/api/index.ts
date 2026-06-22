@@ -22,7 +22,12 @@ export type {
 } from './types/auth'
 export type { ProductResponse, ProductCreatePayload, ProductUpdatePayload } from './types/product'
 export type { UserResponse, UserCreatePayload, UserUpdatePayload } from './types/user'
-export type { OrderResponse, OrderCreatePayload, OrderUpdatePayload } from './types/order'
+export type {
+	OrderResponse,
+	OrderCreatePayload,
+	OrderUpdatePayload,
+	OrderBankTransferLast5Payload,
+} from './types/order'
 export type { CategoryResponse, CategoryCreatePayload, CategoryUpdatePayload } from './types/category'
 export type { ImageResponse, CreateImagePayload, ImageUpdatePayload } from './types/image'
 export type { StatusCode, RoleCode, PaginationParams } from './types/shared'

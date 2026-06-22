@@ -1,5 +1,7 @@
-export type ShippingMethod = '宅配' | '其他'
 export type PaymentMethod = '匯款' | '面交' | 'Line Pay'
+export type ShippingMethod = '宅配' | '其他'
+// export type PaymentMethod = '匯款'
+// export type ShippingMethod = '宅配'
 
 export interface BuyerForm {
   name: string

@@ -9,12 +9,6 @@ const LoginPage = () => {
 
   useEffect(() => {
     openLoginDialog()
-
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-
     navigate('/', { replace: true })
   }, [navigate, openLoginDialog])
 

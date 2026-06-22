@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { productService } from '@/api/product/product'
 import type { ProductResponse } from '@/api/types/product'
+import { resolveApiAssetUrl } from '@/api/utils'
 import { useCart } from '@/contexts/CartContext'
 import { useAppSnackbar } from '@/contexts/SnackbarContext'
 import PATHS from '@/routes/paths'
@@ -91,8 +92,18 @@ const ProductInfoPage = () => {
     }
 
     return [...product.images]
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((image) => image.file_url)
+      .sort((a, b) => {
+        if (a.is_primary !== b.is_primary) {
+          return a.is_primary ? -1 : 1
+        }
+
+        if (a.sort_order !== b.sort_order) {
+          return a.sort_order - b.sort_order
+        }
+
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      })
+      .map((image) => resolveApiAssetUrl(image.file_url))
   }, [product])
 
   const productId = product?.id ?? 'unknown'
@@ -122,6 +133,7 @@ const ProductInfoPage = () => {
       id: `${product.id}-${selectedUnit.unit_id}`,
       name: product.name,
       description: displayDescription,
+      unit_id: selectedUnit.unit_id,
       unit: selectedUnit.unit_name || '規格未命名',
       unitPrice: selectedUnit.price,
       quantity: itemQuantity,

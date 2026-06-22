@@ -53,6 +53,10 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       {
+        path: PATHS.mekarang.orders.detail,
+        element: <OrdersCompletePage />,
+      },
+      {
         path: PATHS.mekarang.products.root,
         element: <ProductsListPage />,
         loader: productsListLoader,

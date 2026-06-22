@@ -26,24 +26,24 @@ import PATHS from '@/routes/paths'
 
 const ORDER_STATUS_CODE = {
   ORDER_CREATED: 1,
-  ORDER_CONFIRMED: 2,
-  PENDING_PAYMENT: 3,
-  PAID: 4,
-  PREPARING: 5,
-  SHIPPING: 6,
-  CANCELED: 7,
-  DELIVERED: 8,
+  ORDER_CONFIRMED_AND_PENDING_PAYMENT: 2,
+  PAID_AND_PREPARING: 3,
+  SHIPPING: 4,
+  DELIVERED: 5,
+  CANCELED: 6,
+  REFUNDED: 7,
+  OTHER: 99,
 } as const
 
 const statusLabelMap: Record<number, string> = {
   [ORDER_STATUS_CODE.ORDER_CREATED]: '訂單成立',
-  [ORDER_STATUS_CODE.ORDER_CONFIRMED]: '訂單已確認',
-  [ORDER_STATUS_CODE.PENDING_PAYMENT]: '待付款',
-  [ORDER_STATUS_CODE.PAID]: '已付款',
-  [ORDER_STATUS_CODE.PREPARING]: '備貨中',
+  [ORDER_STATUS_CODE.ORDER_CONFIRMED_AND_PENDING_PAYMENT]: '確認訂單待付款',
+  [ORDER_STATUS_CODE.PAID_AND_PREPARING]: '已付款備貨中',
   [ORDER_STATUS_CODE.SHIPPING]: '配送中',
-  [ORDER_STATUS_CODE.CANCELED]: '訂單已取消',
   [ORDER_STATUS_CODE.DELIVERED]: '已送達',
+  [ORDER_STATUS_CODE.CANCELED]: '訂單已取消',
+  [ORDER_STATUS_CODE.REFUNDED]: '已退款',
+  [ORDER_STATUS_CODE.OTHER]: '其他',
 }
 
 const statusColorMap: Record<
@@ -51,13 +51,13 @@ const statusColorMap: Record<
   'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success'
 > = {
   [ORDER_STATUS_CODE.ORDER_CREATED]: 'primary',
-  [ORDER_STATUS_CODE.ORDER_CONFIRMED]: 'info',
-  [ORDER_STATUS_CODE.PENDING_PAYMENT]: 'warning',
-  [ORDER_STATUS_CODE.PAID]: 'info',
-  [ORDER_STATUS_CODE.PREPARING]: 'secondary',
+  [ORDER_STATUS_CODE.ORDER_CONFIRMED_AND_PENDING_PAYMENT]: 'warning',
+  [ORDER_STATUS_CODE.PAID_AND_PREPARING]: 'info',
   [ORDER_STATUS_CODE.SHIPPING]: 'secondary',
-  [ORDER_STATUS_CODE.CANCELED]: 'error',
   [ORDER_STATUS_CODE.DELIVERED]: 'success',
+  [ORDER_STATUS_CODE.CANCELED]: 'error',
+  [ORDER_STATUS_CODE.REFUNDED]: 'warning',
+  [ORDER_STATUS_CODE.OTHER]: 'default',
 }
 
 const formatter = new Intl.NumberFormat('zh-TW')
@@ -71,7 +71,7 @@ const OrdersHistoryPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate(`/${PATHS.auth.root}/${PATHS.auth.login}`)
+      navigate(`/${PATHS.auth.root}/${PATHS.auth.login}`, { replace: true })
       return
     }
 
@@ -113,7 +113,7 @@ const OrdersHistoryPage = () => {
   }
 
   const handleViewOrder = (order: OrderResponse) => {
-    navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.complete}`, {
+    navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.root}/${order.id}`, {
       state: { queriedOrder: order },
     })
   }
@@ -137,8 +137,11 @@ const OrdersHistoryPage = () => {
         </Breadcrumbs>
 
         <Paper sx={{ p: 2.4 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack
+            direction="row"
+            sx={{ mb: 2, alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <LocalShippingRoundedIcon color="primary" />
               <Typography variant="h5">我的訂單</Typography>
               {user && (
@@ -165,13 +168,13 @@ const OrdersHistoryPage = () => {
           )}
 
           {loading && (
-            <Stack alignItems="center" sx={{ py: 4 }}>
+            <Stack sx={{ py: 4, alignItems: 'center' }}>
               <CircularProgress size={28} />
             </Stack>
           )}
 
           {!loading && orders.length === 0 && (
-            <Stack alignItems="center" sx={{ py: 4 }}>
+            <Stack sx={{ py: 4, alignItems: 'center' }}>
               <Typography sx={{ color: 'text.secondary' }}>還沒有任何訂單</Typography>
             </Stack>
           )}

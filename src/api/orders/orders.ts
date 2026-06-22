@@ -2,7 +2,12 @@ import BASE_URL from '../base/apiBaseUrl'
 import { API_ENDPOINT } from '../base/apiEndpoint'
 import { DELETE, GET, PATCH, POST } from '../base/apiMethods'
 import type { PaginationParams } from '../types/shared'
-import type { OrderCreatePayload, OrderResponse, OrderUpdatePayload } from '../types/order'
+import type {
+  OrderBankTransferLast5Payload,
+  OrderCreatePayload,
+  OrderResponse,
+  OrderUpdatePayload,
+} from '../types/order'
 
 interface DeletedData {
   id: string
@@ -32,5 +37,8 @@ export const ordersService = {
   },
   cancel: async (id: string) => {
     return PATCH<OrderResponse>(BASE_URL, API_ENDPOINT.ORDERS_CANCEL(id))
+  },
+  submitBankTransferLast5: async (id: string, payload: OrderBankTransferLast5Payload) => {
+    return PATCH<OrderResponse>(BASE_URL, API_ENDPOINT.ORDERS_BANK_TRANSFER_LAST5(id), payload)
   },
 }

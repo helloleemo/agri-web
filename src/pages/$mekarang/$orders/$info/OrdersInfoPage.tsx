@@ -255,21 +255,21 @@ const OrdersInfoPage = () => {
                 }
               >
                 <MenuItem value="匯款">匯款</MenuItem>
-                <MenuItem value="面交">面交</MenuItem>
-                <MenuItem value="Line Pay">Line Pay</MenuItem>
+                {/* <MenuItem value="面交">面交</MenuItem>
+                <MenuItem value="Line Pay">Line Pay</MenuItem> */}
               </Select>
             </Stack>
 
             {receiver.paymentMethod === '匯款' && (
               <Typography sx={{ color: 'error.main', fontSize: '0.82rem', lineHeight: 1.6 }}>
-                匯款方式：下一步將顯示匯款帳號資訊。
+                匯款方式：訂單確認後將提供銀行帳戶資訊，請留意信箱，並於24小時內完成匯款並回填回款末五碼，逾時訂單將自動取消。
               </Typography>
             )}
-            {receiver.paymentMethod === 'Line Pay' && (
+            {/* {receiver.paymentMethod === 'Line Pay' && (
               <Typography sx={{ color: 'error.main', fontSize: '0.82rem', lineHeight: 1.6 }}>
                 Line Pay：下一步將導向付款資訊與訂單狀態。
               </Typography>
-            )}
+            )} */}
           </Stack>
         </Stack>
 

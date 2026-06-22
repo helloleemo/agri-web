@@ -3,9 +3,10 @@ import { Box, Button, Container, Grid, Typography } from '@mui/material'
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded'
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Header, Footer } from '@/components/layout'
 import { useAuth } from '@/contexts/AuthContext'
+import PATHS from '@/routes/paths'
 // import {Typography as themeTypography} from "../../theme/typography";
 
 const heroImage =
@@ -114,6 +115,8 @@ const MainPage = () => {
             <Button
               variant="outlined"
               size="large"
+              component={Link}
+              to={`/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}`}
               sx={{
                 color: 'common.white',
                 borderColor: 'rgba(255,255,255,0.8)',

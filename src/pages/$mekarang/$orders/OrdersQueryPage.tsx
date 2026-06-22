@@ -59,7 +59,7 @@ const OrdersQueryPage = () => {
     try {
       const order = await ordersService.queryByOrderNoAndEmail(trimmedOrderNo, trimmedEmail)
 
-      navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.complete}`, {
+      navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.root}/${order.id}`, {
         state: { queriedOrder: order },
       })
     } catch (error) {

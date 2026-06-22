@@ -20,6 +20,10 @@ export const API_ENDPOINT = {
   ORDERS_QUERY: '/orders/query',
   ORDERS_ID: (id: string) => `/orders/${id}`,
   ORDERS_CANCEL: (id: string) => `/orders/${id}/cancel`,
+  ORDERS_BANK_TRANSFER_LAST5: (id: string) => `/orders/${id}/bank-transfer-last5`,
+
+  // cart
+  CART: '/cart',
 
   // categories
   CATEGORIES: '/categories',
