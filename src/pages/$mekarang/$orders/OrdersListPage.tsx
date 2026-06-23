@@ -2,6 +2,7 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import {
+  Alert,
   Box,
   Breadcrumbs,
   Button,
@@ -13,23 +14,97 @@ import {
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
+import type { CouponResponse } from '@/api'
+import { couponsService } from '@/api'
 import { useCart } from '@/contexts/CartContext'
 import PATHS from '@/routes/paths'
 import { clearCheckoutDraft, readCheckoutDraft, writeCheckoutDraft } from './checkoutDraft'
 
 const formatter = new Intl.NumberFormat('zh-TW')
 
+const toSafeNumber = (value: unknown): number => {
+  const nextValue = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(nextValue) ? nextValue : 0
+}
+
+const toOptionalNumber = (value: unknown): number | null => {
+  return value == null ? null : toSafeNumber(value)
+}
+
+const calculateCouponDiscount = (coupon: CouponResponse, subtotalAmount: number): number => {
+  const now = new Date()
+  const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null
+  const endsAt = coupon.ends_at ? new Date(coupon.ends_at) : null
+
+  const statusCode = toSafeNumber(coupon.status_code)
+  const discountType = toSafeNumber(coupon.discount_type)
+  const discountValue = toSafeNumber(coupon.discount_value)
+  const minOrderAmount = toOptionalNumber(coupon.min_order_amount)
+  const maxDiscountAmount = toOptionalNumber(coupon.max_discount_amount)
+  const usageLimit = toOptionalNumber(coupon.usage_limit)
+  const usedCount = toSafeNumber(coupon.used_count)
+
+  if (statusCode !== 1) return 0
+  if (startsAt && startsAt > now) return 0
+  if (endsAt && endsAt < now) return 0
+  if (usageLimit !== null && usedCount >= usageLimit) return 0
+  if (minOrderAmount !== null && subtotalAmount < minOrderAmount) return 0
+
+  let discountAmount = 0
+
+  if (discountType === 1) {
+    discountAmount = discountValue
+  } else if (discountType === 2) {
+    discountAmount = Math.floor((subtotalAmount * discountValue) / 100)
+  }
+
+  if (maxDiscountAmount !== null) {
+    discountAmount = Math.min(discountAmount, maxDiscountAmount)
+  }
+
+  return Number.isFinite(discountAmount) ? Math.max(0, Math.min(discountAmount, subtotalAmount)) : 0
+}
+
+const getCouponValidationError = (
+  coupon: CouponResponse,
+  subtotalAmount: number,
+): string | null => {
+  const now = new Date()
+  const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null
+  const endsAt = coupon.ends_at ? new Date(coupon.ends_at) : null
+
+  const statusCode = toSafeNumber(coupon.status_code)
+  const minOrderAmount = toOptionalNumber(coupon.min_order_amount)
+  const usageLimit = toOptionalNumber(coupon.usage_limit)
+  const usedCount = toSafeNumber(coupon.used_count)
+
+  if (statusCode !== 1) return `折扣碼 ${coupon.code.toUpperCase()} 目前已停用`
+  if (startsAt && startsAt > now) return `折扣碼 ${coupon.code.toUpperCase()} 尚未開始使用`
+  if (endsAt && endsAt < now) return `折扣碼 ${coupon.code.toUpperCase()} 已過期`
+  if (usageLimit !== null && usedCount >= usageLimit) {
+    return `折扣碼 ${coupon.code.toUpperCase()} 已達使用上限`
+  }
+  if (minOrderAmount !== null && subtotalAmount < minOrderAmount) {
+    return `折扣碼 ${coupon.code.toUpperCase()} 未達最低消費 $${formatter.format(minOrderAmount)}`
+  }
+
+  return null
+}
+
 const OrdersListPage = () => {
   const { items, totalQuantity, updateItemQuantity, removeItem, clearCart } = useCart()
   const [couponInput, setCouponInput] = useState(() => readCheckoutDraft().couponCode)
   const [appliedCoupon, setAppliedCoupon] = useState(() => readCheckoutDraft().couponCode)
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState(0)
+  const [couponMessage, setCouponMessage] = useState('')
+  const [isCheckingCoupon, setIsCheckingCoupon] = useState(false)
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items],
   )
 
-  const grandTotal = subtotal
+  const grandTotal = Math.max(0, subtotal - couponDiscountAmount)
 
   useEffect(() => {
     const draft = readCheckoutDraft()
@@ -39,6 +114,63 @@ const OrdersListPage = () => {
     })
   }, [appliedCoupon])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const refreshAppliedCouponDiscount = async () => {
+      if (!appliedCoupon) {
+        if (isMounted) {
+          setCouponDiscountAmount(0)
+          setCouponMessage('')
+        }
+        return
+      }
+
+      try {
+        const coupons = await couponsService.getList()
+        const coupon = coupons.find((item) => item.code.toUpperCase() === appliedCoupon)
+
+        if (!coupon) {
+          if (isMounted) {
+            setCouponDiscountAmount(0)
+            setCouponMessage(`折扣碼 ${appliedCoupon} 不可用或不存在`)
+            setAppliedCoupon('')
+          }
+          return
+        }
+
+        const validationError = getCouponValidationError(coupon, subtotal)
+
+        if (validationError) {
+          if (isMounted) {
+            setCouponDiscountAmount(0)
+            setCouponMessage(validationError)
+            setAppliedCoupon('')
+          }
+          return
+        }
+
+        const discountAmount = calculateCouponDiscount(coupon, subtotal)
+
+        if (isMounted) {
+          setCouponDiscountAmount(discountAmount)
+        }
+      } catch {
+        if (isMounted) {
+          setCouponDiscountAmount(0)
+          setCouponMessage(`折扣碼 ${appliedCoupon} 驗證失敗`)
+          setAppliedCoupon('')
+        }
+      }
+    }
+
+    void refreshAppliedCouponDiscount()
+
+    return () => {
+      isMounted = false
+    }
+  }, [appliedCoupon, subtotal])
+
   const clearCartAndCoupon = () => {
     clearCart()
     setCouponInput('')
@@ -46,10 +178,57 @@ const OrdersListPage = () => {
     clearCheckoutDraft()
   }
 
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     const normalizedCoupon = couponInput.trim().toUpperCase()
-    setCouponInput(normalizedCoupon)
-    setAppliedCoupon(normalizedCoupon)
+
+    if (!normalizedCoupon) {
+      setCouponInput('')
+      setAppliedCoupon('')
+      setCouponDiscountAmount(0)
+      setCouponMessage('')
+      return
+    }
+
+    try {
+      setIsCheckingCoupon(true)
+      setCouponMessage('')
+
+      const coupons = await couponsService.getList()
+      const coupon = coupons.find((item) => item.code.toUpperCase() === normalizedCoupon)
+
+      if (!coupon) {
+        setAppliedCoupon('')
+        setCouponDiscountAmount(0)
+        setCouponMessage(`折扣碼 ${normalizedCoupon} 不可用或不存在`)
+        return
+      }
+
+      const validationError = getCouponValidationError(coupon, subtotal)
+
+      if (validationError) {
+        setAppliedCoupon('')
+        setCouponDiscountAmount(0)
+        setCouponMessage(validationError)
+        return
+      }
+
+      const discountAmount = calculateCouponDiscount(coupon, subtotal)
+
+      setCouponInput(normalizedCoupon)
+      setAppliedCoupon(normalizedCoupon)
+      setCouponDiscountAmount(discountAmount)
+      setCouponMessage(
+        discountAmount > 0
+          ? `已套用折扣碼：${normalizedCoupon}`
+          : `已套用折扣碼：${normalizedCoupon}，折扣金額為 $0`,
+      )
+    } catch (error) {
+      setAppliedCoupon('')
+      setCouponDiscountAmount(0)
+      setCouponMessage(error instanceof Error ? error.message : '折扣碼驗證失敗')
+    } finally {
+      setIsCheckingCoupon(false)
+    }
   }
 
   return (
@@ -259,10 +438,15 @@ const OrdersListPage = () => {
               placeholder="折扣碼"
               value={couponInput}
               onChange={(event) => setCouponInput(event.target.value)}
-              helperText="折扣金額將在建立訂單時由系統驗證並計算"
+              helperText="按確認後會先驗證折扣碼是否可用"
             />
-            <Button variant="outlined" onClick={applyCoupon} sx={{ minWidth: 96 }}>
-              確認
+            <Button
+              variant="outlined"
+              onClick={() => void applyCoupon()}
+              sx={{ minWidth: 96 }}
+              disabled={isCheckingCoupon}
+            >
+              {isCheckingCoupon ? '驗證中...' : '確認'}
             </Button>
           </Stack>
           <Stack sx={{ minWidth: { md: 320 }, ml: { md: 'auto' } }}>
@@ -272,7 +456,9 @@ const OrdersListPage = () => {
             </Stack>
             <Stack direction="row" sx={{ justifyContent: 'space-between', py: 0.8 }}>
               <Typography color="text.secondary">折扣</Typography>
-              <Typography color="text.secondary">送出訂單後計算</Typography>
+              <Typography color={couponDiscountAmount > 0 ? 'success.main' : 'text.secondary'}>
+                - $ {formatter.format(couponDiscountAmount)}
+              </Typography>
             </Stack>
             <Stack
               direction="row"
@@ -292,6 +478,12 @@ const OrdersListPage = () => {
           </Stack>
         </Stack>
 
+        {couponMessage && (
+          <Alert severity={couponDiscountAmount > 0 ? 'success' : 'error'} sx={{ mt: 2 }}>
+            {couponMessage}
+          </Alert>
+        )}
+
         <Stack direction="row" spacing={1.6} sx={{ justifyContent: 'flex-end', mt: 4 }}>
           <Button
             variant="outlined"
@@ -307,7 +499,6 @@ const OrdersListPage = () => {
             disabled={items.length === 0}
             component={RouterLink}
             to={`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.info}`}
-            onClick={applyCoupon}
             sx={{ minWidth: 220 }}
           >
             確認，繼續填寫寄送資訊

@@ -6,7 +6,6 @@ import {
   Box,
   Breadcrumbs,
   Button,
-  CircularProgress,
   Container,
   FormControl,
   Grid,
@@ -19,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { productService } from '@/api/product/product'
 import type { ProductResponse } from '@/api/types/product'
+import LoadingDialog from '@/components/common/LoadingDialog'
 import { resolveApiAssetUrl } from '@/api/utils'
 import { useCart } from '@/contexts/CartContext'
 import { useAppSnackbar } from '@/contexts/SnackbarContext'
@@ -196,11 +196,7 @@ const ProductInfoPage = () => {
   }
 
   if (loading) {
-    return (
-      <Box component="main" sx={{ py: 14, display: 'grid', placeItems: 'center' }}>
-        <CircularProgress />
-      </Box>
-    )
+    return <LoadingDialog open />
   }
 
   if (errorMessage || !product) {

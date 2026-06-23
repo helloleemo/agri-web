@@ -1,13 +1,21 @@
 import { Box } from '@mui/material'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigation } from 'react-router-dom'
+import LoadingDialog from '@/components/common/LoadingDialog'
 import { Footer, Header } from '@/components/layout'
+import PATHS from '@/routes/paths'
 
 const bannerImage =
   'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1800&q=80'
 
 const Layout = () => {
+  const navigation = useNavigation()
+  const productsListPath = `/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}`
+  const isProductsListLoading =
+    navigation.state === 'loading' && navigation.location?.pathname === productsListPath
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
+      <LoadingDialog open={isProductsListLoading} />
       <Box
         sx={{
           position: 'relative',

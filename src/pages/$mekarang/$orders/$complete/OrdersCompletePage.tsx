@@ -237,7 +237,10 @@ const OrdersCompletePage = () => {
   const paymentMethod = order?.payment_method_label ?? '-'
   const deliveryMethod = order?.delivery_method_label ?? '-'
   const shippingFee = order?.shipping_fee ?? 0
-  const displayedTotalAmount = order?.total_amount ?? 0
+  const displayedTotalAmount = Math.max(
+    0,
+    (order?.subtotal_amount ?? 0) - (order?.discount_amount ?? 0) + shippingFee,
+  )
   const canSubmitTransferLast5 =
     order?.order_status_code === ORDER_STATUS_CODE.ORDER_CONFIRMED_AND_PENDING_PAYMENT &&
     order?.payment_method === 1

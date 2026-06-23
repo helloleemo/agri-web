@@ -1,5 +1,6 @@
 export { authService } from './auth'
 export { productService } from './product'
+export { couponsService } from './coupons'
 export { usersService } from './users'
 export { ordersService } from './orders'
 export { categoriesService } from './categories'
@@ -21,6 +22,7 @@ export type {
 	ResendVerificationEmailRequest,
 } from './types/auth'
 export type { ProductResponse, ProductCreatePayload, ProductUpdatePayload } from './types/product'
+export type { CouponResponse } from './types/coupon'
 export type { UserResponse, UserCreatePayload, UserUpdatePayload } from './types/user'
 export type {
 	OrderResponse,

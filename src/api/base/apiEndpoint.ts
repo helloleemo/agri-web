@@ -11,6 +11,10 @@ export const API_ENDPOINT = {
   PRODUCTS: '/products',
   PRODUCTS_ID: (id: string) => `/products/${id}`,
 
+  // coupons
+  COUPONS: '/coupons',
+  COUPONS_ID: (id: string) => `/coupons/${id}`,
+
   // users
   USERS: '/users',
   USERS_ID: (id: string) => `/users/${id}`,

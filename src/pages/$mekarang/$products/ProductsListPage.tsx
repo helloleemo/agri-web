@@ -8,7 +8,10 @@ import {
   CardMedia,
   Chip,
   Container,
+  FormControl,
   Grid,
+  MenuItem,
+  Select,
   Stack,
   Typography,
 } from '@mui/material'
@@ -48,22 +51,32 @@ const ProductsListPage = () => {
   const { showSnackbar } = useAppSnackbar()
   const { products, errorMessage } = useLoaderData() as ProductListLoaderData
   const [activeCategory, setActiveCategory] = useState<string>('全部')
+  const [selectedUnitMap, setSelectedUnitMap] = useState<Record<string, string>>({})
+
+  const handleUnitChange = (productId: string, unitId: string) => {
+    setSelectedUnitMap((prev) => ({
+      ...prev,
+      [productId]: unitId,
+    }))
+  }
 
   const handleAddToCart = (product: ProductResponse) => {
-    const defaultUnit = product.units[0]
-    if (!defaultUnit) {
+    const selectedUnitId = selectedUnitMap[product.id] ?? product.units[0]?.unit_id ?? ''
+    const selectedUnit = product.units.find((unit) => unit.unit_id === selectedUnitId)
+
+    if (!selectedUnit) {
       showSnackbar(`${product.name} 暫無可選規格`, { severity: 'warning' })
       return
     }
 
     try {
       addItem({
-        id: `${product.id}-${defaultUnit.unit_id}`,
+        id: `${product.id}-${selectedUnit.unit_id}`,
         name: product.name,
         description: product.description || '此商品目前尚未提供詳細描述。',
-        unit_id: defaultUnit.unit_id,
-        unit: defaultUnit.unit_name || '規格未命名',
-        unitPrice: defaultUnit.price,
+        unit_id: selectedUnit.unit_id,
+        unit: selectedUnit.unit_name || '規格未命名',
+        unitPrice: selectedUnit.price,
         quantity: 1,
         image: pickImage(product),
       })
@@ -138,83 +151,120 @@ const ProductsListPage = () => {
 
         {!errorMessage && filteredProducts.length > 0 && (
           <Grid container spacing={3.5}>
-            {filteredProducts.map((product, index) => (
-              <Grid key={`${activeCategory}-${product.id}`} size={{ xs: 12, md: 6 }}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    height: '100%',
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'grey.300',
-                    overflow: 'hidden',
-                    boxShadow: '0 18px 34px rgba(15, 23, 42, 0.06)',
-                    //   ':hover': {
-                    //     boxShadow: '0 24px 48px rgba(15, 23, 42, 0.11)',
-                    //     transform: 'scale(1.05)',
-                    //     transition: 'transform 240ms ease, box-shadow 300ms ease-in-out',
-                    //   },
-                    opacity: 0,
-                    transform: 'translateY(14px)',
-                    animation: 'cardReveal 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-                    animationDelay: `${index * 110}ms`,
-                    '@keyframes cardReveal': {
-                      from: {
+            {filteredProducts.map((product, index) =>
+              (() => {
+                const selectedUnitId =
+                  selectedUnitMap[product.id] ?? product.units[0]?.unit_id ?? ''
+                const selectedUnit = product.units.find((unit) => unit.unit_id === selectedUnitId)
+                const displayPrice = selectedUnit?.price ?? pickPrice(product)
+
+                return (
+                  <Grid key={`${activeCategory}-${product.id}`} size={{ xs: 12, md: 6 }}>
+                    <Card
+                      elevation={0}
+                      sx={{
+                        height: '100%',
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'grey.300',
+                        overflow: 'hidden',
+                        boxShadow: '0 18px 34px rgba(15, 23, 42, 0.06)',
+                        //   ':hover': {
+                        //     boxShadow: '0 24px 48px rgba(15, 23, 42, 0.11)',
+                        //     transform: 'scale(1.05)',
+                        //     transition: 'transform 240ms ease, box-shadow 300ms ease-in-out',
+                        //   },
                         opacity: 0,
                         transform: 'translateY(14px)',
-                      },
-                      to: {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
-                    },
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    image={pickImage(product)}
-                    alt={product.name}
-                    sx={{ height: 280 }}
-                  />
-                  <CardContent sx={{ p: 3 }}>
-                    <Stack
-                      direction="row"
-                      spacing={2}
-                      sx={{ alignItems: 'baseline', justifyContent: 'space-between' }}
+                        animation: 'cardReveal 520ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                        animationDelay: `${index * 110}ms`,
+                        '@keyframes cardReveal': {
+                          from: {
+                            opacity: 0,
+                            transform: 'translateY(14px)',
+                          },
+                          to: {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          },
+                        },
+                      }}
                     >
-                      <Typography variant="h5" sx={{ fontSize: '1.35rem', fontWeight: 700 }}>
-                        {product.name}
-                      </Typography>
-                      <Typography
-                        sx={{ color: 'primary.main', fontSize: '1.6rem', fontWeight: 500 }}
-                      >
-                        $ {pickPrice(product)}
-                      </Typography>
-                    </Stack>
-                    <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3, lineHeight: 1.9 }}>
-                      {product.description || '尚未提供商品描述。'}
-                    </Typography>
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        component={RouterLink}
-                        to={`/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}/${product.id}`}
-                      >
-                        查看詳情
-                      </Button>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => handleAddToCart(product)}
-                      >
-                        加入購物車
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                      <CardMedia
+                        component="img"
+                        image={pickImage(product)}
+                        alt={product.name}
+                        sx={{ height: 280 }}
+                      />
+                      <CardContent sx={{ p: 3 }}>
+                        <Stack
+                          direction="row"
+                          spacing={2}
+                          sx={{ alignItems: 'baseline', justifyContent: 'space-between' }}
+                        >
+                          <Typography variant="h5" sx={{ fontSize: '1.35rem', fontWeight: 700 }}>
+                            {product.name}
+                          </Typography>
+                          <Typography
+                            sx={{ color: 'primary.main', fontSize: '1.6rem', fontWeight: 500 }}
+                          >
+                            $ {displayPrice}
+                          </Typography>
+                        </Stack>
+                        <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3, lineHeight: 1.9 }}>
+                          {product.description || '尚未提供商品描述。'}
+                        </Typography>
+                        <Stack spacing={2} sx={{ mb: 2.5 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: 'text.secondary', fontWeight: 600 }}
+                          >
+                            選擇單位
+                          </Typography>
+                          <FormControl fullWidth size="small">
+                            <Select
+                              value={selectedUnitId}
+                              displayEmpty
+                              onChange={(event) => handleUnitChange(product.id, event.target.value)}
+                              disabled={product.units.length === 0}
+                              sx={{ borderRadius: 2 }}
+                            >
+                              {product.units.length === 0 ? (
+                                <MenuItem value="">暫無可選規格</MenuItem>
+                              ) : (
+                                product.units.map((unit) => (
+                                  <MenuItem key={unit.unit_id} value={unit.unit_id}>
+                                    {(unit.unit_name || '規格未命名') + `（$ ${unit.price}）`}
+                                  </MenuItem>
+                                ))
+                              )}
+                            </Select>
+                          </FormControl>
+                        </Stack>
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                          <Button
+                            fullWidth
+                            variant="outlined"
+                            component={RouterLink}
+                            to={`/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}/${product.id}`}
+                          >
+                            查看詳情
+                          </Button>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={() => handleAddToCart(product)}
+                            disabled={product.units.length === 0}
+                          >
+                            加入購物車
+                          </Button>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )
+              })(),
+            )}
           </Grid>
         )}
       </Container>
