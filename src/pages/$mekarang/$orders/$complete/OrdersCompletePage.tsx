@@ -286,7 +286,7 @@ const OrdersCompletePage = () => {
         <Breadcrumbs sx={{ mb: 4, color: 'text.secondary', fontSize: '0.82rem' }}>
           <Typography
             component={RouterLink}
-            to={`/${PATHS.root}`}
+            to={PATHS.root}
             sx={{ color: 'inherit', textDecoration: 'none' }}
           >
             首頁

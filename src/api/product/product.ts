@@ -9,6 +9,9 @@ interface DeletedData {
 }
 
 export const productService = {
+  getAll: async () => {
+    return GET<ProductResponse[]>(BASE_URL, API_ENDPOINT.PRODUCTS)
+  },
   getList: async (params?: PaginationParams) => {
     return GET<ProductResponse[]>(BASE_URL, API_ENDPOINT.PRODUCTS, params)
   },
