@@ -65,6 +65,22 @@ const defaultHomeContent: HomePageContent = {
     image_url:
       'https://images.unsplash.com/photo-1471194402529-8e0f5a675de6?auto=format&fit=crop&w=1800&q=80',
   },
+  product_detail: {
+    intro: {
+      title: '農產品標題',
+      description:
+        '嚴選合作農場與當季採收時程，透過穩定冷鏈與分級包裝管理，把自然甜香維持在最好的狀態。讓每次下單都能收到一致品質。',
+    },
+    bottom_cta: {
+      title: '標題標題',
+      description:
+        '清洗去絨後，父母半日前即訂購桃禮，面語言用毫果口入半通古就購票方字，再次用果包瓜此處貨決？已回穿，林有花藝。兒升光了單馬中真河以的門卡上連七日？又分者。',
+      button_text: '立即預訂',
+      button_link: defaultProductsPath,
+      image_url:
+        'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1800&q=80',
+    },
+  },
   footer: {
     title: '與我們保持聯繫',
     button_text: '聯絡我們',
@@ -143,6 +159,29 @@ const ensureHomeContent = (raw: unknown): HomePageContent => {
     orders_query: {
       description: content.orders_query?.description ?? fallback.orders_query.description,
       image_url: content.orders_query?.image_url ?? fallback.orders_query.image_url,
+    },
+    product_detail: {
+      intro: {
+        title: content.product_detail?.intro?.title ?? fallback.product_detail.intro.title,
+        description:
+          content.product_detail?.intro?.description ?? fallback.product_detail.intro.description,
+      },
+      bottom_cta: {
+        title:
+          content.product_detail?.bottom_cta?.title ?? fallback.product_detail.bottom_cta.title,
+        description:
+          content.product_detail?.bottom_cta?.description ??
+          fallback.product_detail.bottom_cta.description,
+        button_text:
+          content.product_detail?.bottom_cta?.button_text ??
+          fallback.product_detail.bottom_cta.button_text,
+        button_link:
+          content.product_detail?.bottom_cta?.button_link ??
+          fallback.product_detail.bottom_cta.button_link,
+        image_url:
+          content.product_detail?.bottom_cta?.image_url ??
+          fallback.product_detail.bottom_cta.image_url,
+      },
     },
   }
 }

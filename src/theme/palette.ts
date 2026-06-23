@@ -7,12 +7,11 @@ const palette: PaletteOptions = {
     light: '#ecfeff',
     dark: '#155e75',
     contrastText: '#FFFFFF',
-
   },
   secondary: {
-    main: '#d2830d',
-    light: '#fdc63b',
-    dark: '#9c4d09',
+    main: '#0f5d73',
+    light: '#d7f8f9',
+    dark: '#0d4253',
     contrastText: '#FFFFFF',
   },
   grey: {
