@@ -46,9 +46,24 @@ export async function handleResponse<T>(res: Response): Promise<T> {
 
   const json = payload as Partial<API_RESPONSE<T>> | null
 
+  const statusCode =
+    typeof json?.code === 'string'
+      ? json.code
+      : typeof json?.statusCode === 'string'
+        ? json.statusCode
+        : typeof json?.status_code === 'string'
+          ? json.status_code
+          : ''
+
   if (!res.ok) {
-    // Handle authentication failures
-    if (res.status === 401 || res.status === 403) {
+    // Only force logout when token/session is actually invalid.
+    const shouldForceLogout =
+      res.status === 401 &&
+      (statusCode === 'UNAUTHORIZED' ||
+        !statusCode ||
+        (typeof json?.detail === 'string' && /token|expired|authentication/i.test(json.detail)))
+
+    if (shouldForceLogout) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('authUser')
       window.location.href = '/#/'
@@ -64,14 +79,6 @@ export async function handleResponse<T>(res: Response): Promise<T> {
           ? payload
           : `HTTP ${res.status}: ${res.statusText}`
 
-    const statusCode =
-      typeof json?.code === 'string'
-        ? json.code
-        : typeof json?.statusCode === 'string'
-          ? json.statusCode
-          : typeof json?.status_code === 'string'
-            ? json.status_code
-            : ''
     const error = new ApiError(statusCode, messageFromPayload, res.status, json?.detail)
 
     globalApiErrorHandler?.(error)

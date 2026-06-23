@@ -9,6 +9,9 @@ const PATHS = {
   },
   mekarang: {
     root: 'mekarang',
+    account: {
+      changePassword: 'account/change-password',
+    },
     products: {
       root: 'products',
       detail: 'products/:id',

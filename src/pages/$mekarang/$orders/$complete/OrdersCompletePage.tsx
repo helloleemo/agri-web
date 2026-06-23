@@ -159,7 +159,9 @@ const OrdersCompletePage = () => {
   const order = latestOrder ?? orderFromState
 
   useEffect(() => {
-    if (!resolvedOrderId) {
+    // Guests can land here with created order data in navigation state.
+    // Skip authenticated detail fetch for guests to avoid 401-triggered global redirect.
+    if (!resolvedOrderId || !isAuthenticated) {
       return
     }
 
@@ -190,7 +192,7 @@ const OrdersCompletePage = () => {
     return () => {
       isMounted = false
     }
-  }, [resolvedOrderId, refreshVersion])
+  }, [isAuthenticated, resolvedOrderId, refreshVersion])
 
   const progressSteps = getProgressSteps(order?.order_status_code)
 
