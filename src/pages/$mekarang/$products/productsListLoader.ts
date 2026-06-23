@@ -8,7 +8,7 @@ export interface ProductListLoaderData {
 
 export const productsListLoader = async (): Promise<ProductListLoaderData> => {
   try {
-    const products = await productService.getList()
+    const products = await productService.getAll()
     return { products, errorMessage: '' }
   } catch (error) {
     console.error('Failed to fetch products:', error)

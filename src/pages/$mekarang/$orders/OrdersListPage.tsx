@@ -58,7 +58,7 @@ const OrdersListPage = () => {
         <Breadcrumbs sx={{ mb: 4, color: 'text.secondary', fontSize: '0.82rem' }}>
           <Typography
             component={RouterLink}
-            to={`/${PATHS.root}`}
+            to={PATHS.root}
             sx={{ color: 'inherit', textDecoration: 'none' }}
           >
             首頁
@@ -272,9 +272,7 @@ const OrdersListPage = () => {
             </Stack>
             <Stack direction="row" sx={{ justifyContent: 'space-between', py: 0.8 }}>
               <Typography color="text.secondary">折扣</Typography>
-              <Typography color="text.secondary">
-                送出訂單後計算
-              </Typography>
+              <Typography color="text.secondary">送出訂單後計算</Typography>
             </Stack>
             <Stack
               direction="row"
@@ -317,7 +315,9 @@ const OrdersListPage = () => {
         </Stack>
 
         {appliedCoupon && (
-          <Typography sx={{ mt: 1.5, textAlign: 'right', color: 'success.main', fontSize: '0.9rem' }}>
+          <Typography
+            sx={{ mt: 1.5, textAlign: 'right', color: 'success.main', fontSize: '0.9rem' }}
+          >
             已套用折扣碼：{appliedCoupon}
           </Typography>
         )}

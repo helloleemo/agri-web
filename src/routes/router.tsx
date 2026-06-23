@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createHashRouter, Navigate } from 'react-router-dom'
 import NotFoundPage from '@/pages/NotFoundPage'
 // import Index from "../pages/Index";
 import PATHS from '@/routes/paths'
@@ -18,7 +18,7 @@ import VerifyEmailPage from '../pages/$auth/$verify-email/VerifyEmailPage'
 import ResendVerificationEmailPage from '../pages/$auth/$resend-verification-email/ResendVerificationEmailPage'
 import MainPage from '@/pages/$index/MainPage'
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: PATHS.root,
     element: <MainPage />,
