@@ -5,6 +5,7 @@ export { usersService } from './users'
 export { ordersService } from './orders'
 export { categoriesService } from './categories'
 export { imagesService } from './images'
+export { siteContentService } from './site-content'
 
 export { API_ENDPOINT } from './base/apiEndpoint'
 export { setApiErrorHandler } from './base/apiMethods'
@@ -33,3 +34,4 @@ export type {
 export type { CategoryResponse, CategoryCreatePayload, CategoryUpdatePayload } from './types/category'
 export type { ImageResponse, CreateImagePayload, ImageUpdatePayload } from './types/image'
 export type { StatusCode, RoleCode, PaginationParams } from './types/shared'
+export type { HomePageContent, SiteContentResponse } from './site-content'

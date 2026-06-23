@@ -37,4 +37,7 @@ export const API_ENDPOINT = {
   // images
   IMAGES_PRODUCT_ID: (productId: string) => `/images/${productId}`,
   IMAGES_ID: (imageId: string) => `/images/${imageId}`,
+
+  // site content
+  PUBLIC_SITE_CONTENTS_BY_PAGE: (pageKey: string) => `/public/site-contents/${pageKey}`,
 }
