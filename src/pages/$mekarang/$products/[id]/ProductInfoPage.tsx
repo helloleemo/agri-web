@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
+import { siteContentService, type HomePageContent } from '@/api'
 import { productService } from '@/api/product/product'
 import type { ProductResponse } from '@/api/types/product'
 import LoadingDialog from '@/components/common/LoadingDialog'
@@ -30,20 +31,94 @@ const FALLBACK_IMAGES = [
   'https://picsum.photos/id/33/1200/900?auto=format&fit=crop&w=1800&q=80',
 ]
 
-const orderSteps = [
+const HOME_PAGE_KEY = 'home'
+const defaultProductsPath = `/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}`
+
+type ProductDetailPageContent = Pick<HomePageContent, 'flow' | 'product_detail'>
+
+const defaultProductDetailPageContent: ProductDetailPageContent = {
+  flow: {
+    title: '從下單到餐桌的三步驟',
+    items: [
+      { title: '訂購', description: '線上快速選購，依需求挑選蔬果組合與配送時段。' },
+      { title: '打包', description: '採收後即刻分類與低溫包裝，完整保留新鮮口感。' },
+      { title: '到府', description: '冷鏈配送準時送達，讓每日料理都能輕鬆上桌。' },
+    ],
+  },
+  product_detail: {
+    intro: {
+      title: '農產品標題',
+      description:
+        '嚴選合作農場與當季採收時程，透過穩定冷鏈與分級包裝管理，把自然甜香維持在最好的狀態。讓每次下單都能收到一致品質。',
+    },
+    bottom_cta: {
+      title: '標題標題',
+      description:
+        '清洗去絨後，父母半日前即訂購桃禮，面語言用毫果口入半通古就購票方字，再次用果包瓜此處貨決？已回穿，林有花藝。兒升光了單馬中真河以的門卡上連七日？又分者。',
+      button_text: '立即預訂',
+      button_link: defaultProductsPath,
+      image_url:
+        'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1800&q=80',
+    },
+  },
+}
+
+const cloneDefaultProductDetailPageContent = () =>
+  JSON.parse(JSON.stringify(defaultProductDetailPageContent)) as ProductDetailPageContent
+
+const ensureProductDetailPageContent = (input: unknown): ProductDetailPageContent => {
+  const fallback = cloneDefaultProductDetailPageContent()
+  if (!input || typeof input !== 'object') {
+    return fallback
+  }
+
+  const raw = input as Partial<HomePageContent>
+  const flowItems = Array.isArray(raw.flow?.items) ? raw.flow.items.slice(0, 3) : []
+
+  while (flowItems.length < 3) {
+    flowItems.push(fallback.flow.items[flowItems.length])
+  }
+
+  return {
+    flow: {
+      title: raw.flow?.title ?? fallback.flow.title,
+      items: flowItems.map((item, index) => ({
+        title: item?.title ?? fallback.flow.items[index].title,
+        description: item?.description ?? fallback.flow.items[index].description,
+      })),
+    },
+    product_detail: {
+      intro: {
+        title: raw.product_detail?.intro?.title ?? fallback.product_detail.intro.title,
+        description:
+          raw.product_detail?.intro?.description ?? fallback.product_detail.intro.description,
+      },
+      bottom_cta: {
+        title: raw.product_detail?.bottom_cta?.title ?? fallback.product_detail.bottom_cta.title,
+        description:
+          raw.product_detail?.bottom_cta?.description ??
+          fallback.product_detail.bottom_cta.description,
+        button_text:
+          raw.product_detail?.bottom_cta?.button_text ??
+          fallback.product_detail.bottom_cta.button_text,
+        button_link:
+          raw.product_detail?.bottom_cta?.button_link ??
+          fallback.product_detail.bottom_cta.button_link,
+        image_url:
+          raw.product_detail?.bottom_cta?.image_url ?? fallback.product_detail.bottom_cta.image_url,
+      },
+    },
+  }
+}
+
+const orderStepIcons = [
   {
-    title: '訂購',
-    description: '線上快速選購，依需求挑選規格與數量。',
     icon: <CalendarMonthRoundedIcon sx={{ fontSize: 42 }} />,
   },
   {
-    title: '打包',
-    description: '分級揀選後進行低溫包裝，完整保留鮮度。',
     icon: <Inventory2RoundedIcon sx={{ fontSize: 42 }} />,
   },
   {
-    title: '到府',
-    description: '冷鏈配送準時送達，讓你收到當季最佳狀態。',
     icon: <LocalShippingRoundedIcon sx={{ fontSize: 42 }} />,
   },
 ]
@@ -54,12 +129,28 @@ const ProductInfoPage = () => {
   const { addItem, replaceWithSingleItem } = useCart()
   const { showSnackbar } = useAppSnackbar()
   const [product, setProduct] = useState<ProductResponse | null>(null)
+  const [pageContent, setPageContent] = useState<ProductDetailPageContent>(
+    cloneDefaultProductDetailPageContent,
+  )
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
 
   const [selectionMap, setSelectionMap] = useState<
     Record<string, { unitId: string; quantity: string; activeImageIndex: number }>
   >({})
+
+  useEffect(() => {
+    const fetchPageContent = async () => {
+      try {
+        const response = await siteContentService.getPublicByPageKey<HomePageContent>(HOME_PAGE_KEY)
+        setPageContent(ensureProductDetailPageContent(response.content_data))
+      } catch {
+        // Keep fallback content when API is unavailable.
+      }
+    }
+
+    void fetchPageContent()
+  }, [])
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -121,6 +212,16 @@ const ProductInfoPage = () => {
 
   const displayDescription =
     product?.description || '此商品目前尚未提供詳細描述，歡迎先加入購物車或聯絡我們了解更多。'
+
+  const orderSteps = useMemo(
+    () =>
+      pageContent.flow.items.slice(0, 3).map((step, index) => ({
+        title: step.title,
+        description: step.description,
+        icon: orderStepIcons[index]?.icon,
+      })),
+    [pageContent.flow.items],
+  )
 
   const gotoOrderFlow = (mode: 'addToCart' | 'buyNow') => {
     if (!product || !selectedUnit) {
@@ -372,13 +473,18 @@ const ProductInfoPage = () => {
       <Box sx={{ bgcolor: 'grey.100', py: { xs: 8, md: 10 } }}>
         <Container sx={{ textAlign: 'center' }}>
           <Typography variant="h3" sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}>
-            農產品標題
+            {pageContent.product_detail.intro.title}
           </Typography>
           <Typography sx={{ maxWidth: 700, mx: 'auto', color: 'text.secondary', lineHeight: 1.9 }}>
-            {displayDescription}
-            每一批次皆標示產地與建議保存方式，從選果到出貨流程透明可追溯，讓你在家中也能安心享受土地的季節風味。
+            {pageContent.product_detail.intro.description}
           </Typography>
 
+          <Typography
+            variant="h3"
+            sx={{ mt: { xs: 5, md: 8 }, mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}
+          >
+            {pageContent.flow.title}
+          </Typography>
           <Grid container spacing={4} sx={{ mt: { xs: 5, md: 8 } }}>
             {orderSteps.map((step, index) => (
               <Grid key={step.title} size={{ xs: 12, md: 4 }}>
@@ -397,7 +503,7 @@ const ProductInfoPage = () => {
                       }}
                     />
                   )}
-                  <Box sx={{ color: 'primary.main', mb: 2 }}>{step.icon}</Box>
+                  <Box sx={{ color: 'primary.main', mb: 2 }}>{step.icon ?? null}</Box>
                   <Typography variant="h5" sx={{ mb: 1.4, fontSize: '1.35rem' }}>
                     {step.title}
                   </Typography>
@@ -420,11 +526,10 @@ const ProductInfoPage = () => {
       >
         <Container>
           <Typography variant="h3" sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}>
-            農產品標題
+            {pageContent.product_detail.bottom_cta.title}
           </Typography>
           <Typography sx={{ maxWidth: 700, mx: 'auto', color: 'text.secondary', lineHeight: 1.9 }}>
-            嚴選合作農場與當季採收時程，透過穩定冷鏈與分級包裝管理，把自然甜香維持在最好的狀態。
-            讓每次下單都能收到一致品質。
+            {pageContent.product_detail.bottom_cta.description}
           </Typography>
         </Container>
       </Box>
@@ -443,15 +548,14 @@ const ProductInfoPage = () => {
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundImage:
-              'linear-gradient(180deg, rgba(8, 31, 31, 0.28), rgba(8, 31, 31, 0.64)), url(https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1800&q=80)',
+            backgroundImage: `linear-gradient(180deg, rgba(8, 31, 31, 0.28), rgba(8, 31, 31, 0.64)), url(${pageContent.product_detail.bottom_cta.image_url})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         />
         <Container sx={{ position: 'relative', zIndex: 1, px: 3 }}>
           <Typography variant="h2" sx={{ mb: 2, fontSize: { xs: '2rem', md: '2.8rem' } }}>
-            標題標題
+            {pageContent.product_detail.bottom_cta.title}
           </Typography>
           <Typography
             sx={{
@@ -462,10 +566,11 @@ const ProductInfoPage = () => {
               lineHeight: 1.8,
             }}
           >
-            清洗去絨後，父母半日前即訂購桃禮，面語言用毫果口入半通古就購票方字，
-            再次用果包瓜此處貨決？已回穿，林有花藝。兒升光了單馬中真河以的門卡上連七日？又分者。
+            {pageContent.product_detail.bottom_cta.description}
           </Typography>
           <Button
+            component={RouterLink}
+            to={pageContent.product_detail.bottom_cta.button_link || defaultProductsPath}
             variant="outlined"
             size="large"
             sx={{
@@ -475,7 +580,7 @@ const ProductInfoPage = () => {
               '&:hover': { borderColor: 'common.white', bgcolor: 'rgba(255,255,255,0.08)' },
             }}
           >
-            立即預訂
+            {pageContent.product_detail.bottom_cta.button_text}
           </Button>
         </Container>
       </Box>
