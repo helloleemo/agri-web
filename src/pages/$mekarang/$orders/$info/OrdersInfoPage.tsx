@@ -33,6 +33,14 @@ const OrdersInfoPage = () => {
   const [buyer, setBuyer] = useState<BuyerForm>(() => readCheckoutDraft().buyer)
   const [receiver, setReceiver] = useState<ReceiverForm>(() => readCheckoutDraft().receiver)
   const [sameAsBuyer, setSameAsBuyer] = useState(false)
+  const [touched, setTouched] = useState({
+    buyerName: false,
+    buyerPhone: false,
+    buyerEmail: false,
+    receiverName: false,
+    receiverPhone: false,
+    receiverAddress: false,
+  })
 
   const canContinue = useMemo(() => {
     const buyerValid =
@@ -43,6 +51,11 @@ const OrdersInfoPage = () => {
     const receiverValid = receiver.name.trim() && receiver.phone.trim() && receiver.address.trim()
     return Boolean(items.length > 0 && buyerValid && receiverValid)
   }, [buyer, receiver, items.length])
+
+  // Scroll to top on page mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   useEffect(() => {
     const draft = readCheckoutDraft()
@@ -63,6 +76,25 @@ const OrdersInfoPage = () => {
         phone: buyer.phone,
       }))
     }
+  }
+
+  const getFieldError = (field: string, value: string): string => {
+    if (!touched[field as keyof typeof touched]) return ''
+
+    if (!value.trim()) {
+      if (field === 'buyerName') return '訂購人姓名為必填'
+      if (field === 'buyerPhone') return '電話號碼為必填'
+      if (field === 'buyerEmail') return 'Email 為必填'
+      if (field === 'receiverName') return '收件人姓名為必填'
+      if (field === 'receiverPhone') return '收件人電話為必填'
+      if (field === 'receiverAddress') return '地址為必填'
+    }
+
+    if (field === 'buyerEmail' && value.trim() && !EMAIL_PATTERN.test(value.trim())) {
+      return 'Email 格式不正確'
+    }
+
+    return ''
   }
 
   const continueToPayment = () => {
@@ -139,6 +171,8 @@ const OrdersInfoPage = () => {
               label="訂購人姓名"
               size="small"
               value={buyer.name}
+              error={Boolean(getFieldError('buyerName', buyer.name))}
+              helperText={getFieldError('buyerName', buyer.name)}
               onChange={(event) => {
                 const nextName = event.target.value
                 setBuyer((prev) => ({ ...prev, name: nextName }))
@@ -147,11 +181,14 @@ const OrdersInfoPage = () => {
                   setReceiver((prev) => ({ ...prev, name: nextName }))
                 }
               }}
+              onBlur={() => setTouched((prev) => ({ ...prev, buyerName: true }))}
             />
             <TextField
               label="電話"
               size="small"
               value={buyer.phone}
+              error={Boolean(getFieldError('buyerPhone', buyer.phone))}
+              helperText={getFieldError('buyerPhone', buyer.phone)}
               onChange={(event) => {
                 const nextPhone = event.target.value
                 setBuyer((prev) => ({ ...prev, phone: nextPhone }))
@@ -160,6 +197,7 @@ const OrdersInfoPage = () => {
                   setReceiver((prev) => ({ ...prev, phone: nextPhone }))
                 }
               }}
+              onBlur={() => setTouched((prev) => ({ ...prev, buyerPhone: true }))}
             />
             <TextField
               label="Email"
@@ -167,8 +205,10 @@ const OrdersInfoPage = () => {
               required
               size="small"
               value={buyer.email}
-              helperText="無論是否註冊，下單皆需填寫 Email"
+              error={Boolean(getFieldError('buyerEmail', buyer.email))}
+              helperText={getFieldError('buyerEmail', buyer.email)}
               onChange={(event) => setBuyer((prev) => ({ ...prev, email: event.target.value }))}
+              onBlur={() => setTouched((prev) => ({ ...prev, buyerEmail: true }))}
             />
             <TextField
               label="備註說明"
@@ -204,21 +244,30 @@ const OrdersInfoPage = () => {
               label="收件人姓名"
               size="small"
               value={receiver.name}
+              error={Boolean(getFieldError('receiverName', receiver.name))}
+              helperText={getFieldError('receiverName', receiver.name)}
               onChange={(event) => setReceiver((prev) => ({ ...prev, name: event.target.value }))}
+              onBlur={() => setTouched((prev) => ({ ...prev, receiverName: true }))}
             />
             <TextField
               label="電話"
               size="small"
               value={receiver.phone}
+              error={Boolean(getFieldError('receiverPhone', receiver.phone))}
+              helperText={getFieldError('receiverPhone', receiver.phone)}
               onChange={(event) => setReceiver((prev) => ({ ...prev, phone: event.target.value }))}
+              onBlur={() => setTouched((prev) => ({ ...prev, receiverPhone: true }))}
             />
             <TextField
               label="地址"
               size="small"
               value={receiver.address}
+              error={Boolean(getFieldError('receiverAddress', receiver.address))}
+              helperText={getFieldError('receiverAddress', receiver.address)}
               onChange={(event) =>
                 setReceiver((prev) => ({ ...prev, address: event.target.value }))
               }
+              onBlur={() => setTouched((prev) => ({ ...prev, receiverAddress: true }))}
             />
 
             <Stack spacing={0.8}>
