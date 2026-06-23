@@ -2,10 +2,10 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded'
 import { Box, Breadcrumbs, Button, Container, Stack, Typography } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
-import type { OrderCreatePayload } from '@/api'
-import { ordersService } from '@/api'
+import type { CouponResponse, OrderCreatePayload } from '@/api'
+import { couponsService, ordersService } from '@/api'
 import { useCart } from '@/contexts/CartContext'
 import { useAppSnackbar } from '@/contexts/SnackbarContext'
 import PATHS from '@/routes/paths'
@@ -19,6 +19,15 @@ import {
 const formatter = new Intl.NumberFormat('zh-TW')
 const UUID_PREFIX_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
+
+const toSafeNumber = (value: unknown): number => {
+  const nextValue = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(nextValue) ? nextValue : 0
+}
+
+const toOptionalNumber = (value: unknown): number | null => {
+  return value == null ? null : toSafeNumber(value)
+}
 
 const extractProductId = (cartItemId: string): string | null => {
   const match = cartItemId.match(UUID_PREFIX_PATTERN)
@@ -35,20 +44,135 @@ const extractUnitId = (cartItemId: string): string | null => {
   return matches[1]
 }
 
+const calculateCouponDiscount = (coupon: CouponResponse, subtotalAmount: number): number => {
+  const now = new Date()
+  const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null
+  const endsAt = coupon.ends_at ? new Date(coupon.ends_at) : null
+  const statusCode = toSafeNumber(coupon.status_code)
+  const discountType = toSafeNumber(coupon.discount_type)
+  const discountValue = toSafeNumber(coupon.discount_value)
+  const minOrderAmount = toOptionalNumber(coupon.min_order_amount)
+  const maxDiscountAmount = toOptionalNumber(coupon.max_discount_amount)
+  const usageLimit = toOptionalNumber(coupon.usage_limit)
+  const usedCount = toSafeNumber(coupon.used_count)
+
+  if (statusCode !== 1) return 0
+  if (startsAt && startsAt > now) return 0
+  if (endsAt && endsAt < now) return 0
+  if (usageLimit !== null && usedCount >= usageLimit) return 0
+  if (minOrderAmount !== null && subtotalAmount < minOrderAmount) return 0
+
+  let discountAmount = 0
+
+  if (discountType === 1) {
+    discountAmount = discountValue
+  } else if (discountType === 2) {
+    discountAmount = Math.floor((subtotalAmount * discountValue) / 100)
+  }
+
+  if (maxDiscountAmount !== null) {
+    discountAmount = Math.min(discountAmount, maxDiscountAmount)
+  }
+
+  return Math.max(0, Math.min(discountAmount, subtotalAmount))
+}
+
+const getCouponValidationError = (
+  coupon: CouponResponse,
+  subtotalAmount: number,
+): string | null => {
+  const now = new Date()
+  const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null
+  const endsAt = coupon.ends_at ? new Date(coupon.ends_at) : null
+  const statusCode = toSafeNumber(coupon.status_code)
+  const minOrderAmount = toOptionalNumber(coupon.min_order_amount)
+  const usageLimit = toOptionalNumber(coupon.usage_limit)
+  const usedCount = toSafeNumber(coupon.used_count)
+  const couponCode = coupon.code.toUpperCase()
+
+  if (statusCode !== 1) return `折扣碼 ${couponCode} 目前已停用`
+  if (startsAt && startsAt > now) return `折扣碼 ${couponCode} 尚未開始使用`
+  if (endsAt && endsAt < now) return `折扣碼 ${couponCode} 已過期`
+  if (usageLimit !== null && usedCount >= usageLimit) {
+    return `折扣碼 ${couponCode} 已達使用上限`
+  }
+  if (minOrderAmount !== null && subtotalAmount < minOrderAmount) {
+    return `折扣碼 ${couponCode} 未達最低消費 $${formatter.format(minOrderAmount)}`
+  }
+
+  return null
+}
+
 const OrdersPaymentPage = () => {
   const navigate = useNavigate()
   const { items, clearCart } = useCart()
   const { showSnackbar } = useAppSnackbar()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState(0)
+  const [couponValidationError, setCouponValidationError] = useState('')
   const checkoutDraft = readCheckoutDraft()
+  const appliedCouponCode = checkoutDraft.couponCode.trim().toUpperCase()
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items],
   )
   const shippingFee = checkoutDraft.receiver.shippingMethod === '宅配' ? 120 : 0
-  const totalAmount = subtotal + shippingFee
+  const totalAmount = Math.max(0, subtotal - couponDiscountAmount + shippingFee)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadCouponDiscount = async () => {
+      if (!appliedCouponCode) {
+        if (isMounted) {
+          setCouponDiscountAmount(0)
+          setCouponValidationError('')
+        }
+        return
+      }
+
+      try {
+        const coupons = await couponsService.getList()
+        const coupon = coupons.find((item) => item.code.toUpperCase() === appliedCouponCode)
+
+        if (!coupon) {
+          if (isMounted) {
+            setCouponDiscountAmount(0)
+            setCouponValidationError(`找不到折扣碼 ${appliedCouponCode}`)
+          }
+          return
+        }
+
+        const validationError = getCouponValidationError(coupon, subtotal)
+
+        if (validationError) {
+          if (isMounted) {
+            setCouponDiscountAmount(0)
+            setCouponValidationError(validationError)
+          }
+          return
+        }
+
+        if (isMounted) {
+          setCouponDiscountAmount(calculateCouponDiscount(coupon, subtotal))
+          setCouponValidationError('')
+        }
+      } catch (error) {
+        if (isMounted) {
+          setCouponDiscountAmount(0)
+          setCouponValidationError(error instanceof Error ? error.message : '折扣碼驗證失敗')
+        }
+      }
+    }
+
+    void loadCouponDiscount()
+
+    return () => {
+      isMounted = false
+    }
+  }, [appliedCouponCode, subtotal])
 
   const createOrderPayload = (): OrderCreatePayload => {
     const mappedItems = items.map((item) => {
@@ -235,6 +359,18 @@ const OrdersPaymentPage = () => {
             </Typography>
           </Typography>
           <Typography>
+            折扣：
+            <Typography
+              component="span"
+              sx={{
+                fontWeight: 700,
+                color: couponDiscountAmount > 0 ? 'success.main' : 'text.primary',
+              }}
+            >
+              - $ {formatter.format(couponDiscountAmount)}
+            </Typography>
+          </Typography>
+          <Typography>
             運費：
             <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
               $ {formatter.format(shippingFee)}
@@ -249,7 +385,7 @@ const OrdersPaymentPage = () => {
           <Typography>
             套用折扣碼：
             <Typography component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
-              {checkoutDraft.couponCode || '未使用'}
+              {appliedCouponCode || '未使用'}
             </Typography>
           </Typography>
           <Typography>
@@ -306,6 +442,10 @@ const OrdersPaymentPage = () => {
           <Typography sx={{ color: 'error.main', mt: 1 }}>
             請確認以上訂單資訊無誤後送出，送出後將無法修改訂單內容。
           </Typography>
+
+          {couponValidationError && (
+            <Typography sx={{ color: 'error.main' }}>{couponValidationError}</Typography>
+          )}
 
           {submitError && <Typography sx={{ color: 'error.main' }}>{submitError}</Typography>}
         </Stack>

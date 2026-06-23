@@ -1,0 +1,1 @@
+export { couponsService } from './coupons'

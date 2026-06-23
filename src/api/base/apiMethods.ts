@@ -56,8 +56,10 @@ export async function handleResponse<T>(res: Response): Promise<T> {
     }
 
     const messageFromPayload =
-      typeof json?.message === 'string'
-        ? json.message
+      typeof json?.detail === 'string' && json.detail.trim()
+        ? json.detail
+        : typeof json?.message === 'string'
+          ? json.message
         : typeof payload === 'string' && payload.trim()
           ? payload
           : `HTTP ${res.status}: ${res.statusText}`
@@ -70,7 +72,7 @@ export async function handleResponse<T>(res: Response): Promise<T> {
           : typeof json?.status_code === 'string'
             ? json.status_code
             : ''
-    const error = new ApiError(statusCode, messageFromPayload, res.status)
+    const error = new ApiError(statusCode, messageFromPayload, res.status, json?.detail)
 
     globalApiErrorHandler?.(error)
 
@@ -87,8 +89,13 @@ export async function handleResponse<T>(res: Response): Promise<T> {
           : typeof json.status_code === 'string'
             ? json.status_code
             : 'E000000'
-    const message = typeof json.message === 'string' ? json.message : 'Unknown API error'
-    const error = new ApiError(statusCode, message, res.status)
+    const message =
+      typeof json.detail === 'string' && json.detail.trim()
+        ? json.detail
+        : typeof json.message === 'string'
+          ? json.message
+          : 'Unknown API error'
+    const error = new ApiError(statusCode, message, res.status, json.detail)
 
     globalApiErrorHandler?.(error)
 
