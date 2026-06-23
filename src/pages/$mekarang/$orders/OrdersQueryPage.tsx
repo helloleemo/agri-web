@@ -1,12 +1,15 @@
 import { Box, Button, Stack, TextField, Typography } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ordersService } from '@/api'
+import { ordersService, siteContentService, type HomePageContent } from '@/api'
 import Header from '@/components/layout/Header'
 import PATHS from '@/routes/paths'
 
-const heroImage =
+const HOME_PAGE_KEY = 'home'
+const defaultHeroImage =
   'https://images.unsplash.com/photo-1471194402529-8e0f5a675de6?auto=format&fit=crop&w=1800&q=80'
+const defaultDescription =
+  '輸入你的訂單編號與 Email，立即查看付款狀態、配送進度與收件資訊。若你剛完成下單，也可以在這裡快速追蹤最新處理狀態。'
 
 const OrdersQueryPage = () => {
   const navigate = useNavigate()
@@ -16,6 +19,29 @@ const OrdersQueryPage = () => {
   const [emailError, setEmailError] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [description, setDescription] = useState(defaultDescription)
+  const [heroImage, setHeroImage] = useState(defaultHeroImage)
+
+  useEffect(() => {
+    const loadOrdersQueryContent = async () => {
+      try {
+        const data = await siteContentService.getPublicByPageKey<HomePageContent>(HOME_PAGE_KEY)
+        const managedDescription = data.content_data?.orders_query?.description?.trim()
+        const managedImage = data.content_data?.orders_query?.image_url?.trim()
+
+        if (managedDescription) {
+          setDescription(managedDescription)
+        }
+        if (managedImage) {
+          setHeroImage(managedImage)
+        }
+      } catch {
+        // Keep fallback content when API is unavailable.
+      }
+    }
+
+    void loadOrdersQueryContent()
+  }, [])
 
   const validate = (trimmedOrderNo: string, trimmedEmail: string) => {
     let valid = true
@@ -94,10 +120,7 @@ const OrdersQueryPage = () => {
               訂單查詢
             </Typography>
 
-            <Typography sx={{ color: 'text.secondary', lineHeight: 1.9 }}>
-              輸入你的訂單編號與 Email，立即查看付款狀態、配送進度與收件資訊。
-              若你剛完成下單，也可以在這裡快速追蹤最新處理狀態。
-            </Typography>
+            <Typography sx={{ color: 'text.secondary', lineHeight: 1.9 }}>{description}</Typography>
 
             <Stack spacing={1.2}>
               <TextField
