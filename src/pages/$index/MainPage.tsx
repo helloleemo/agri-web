@@ -49,7 +49,7 @@ const flowItems = [
 ]
 
 const MainPage = () => {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { openLoginDialog } = useAuth()
 
   useEffect(() => {
@@ -58,7 +58,9 @@ const MainPage = () => {
     }
 
     openLoginDialog()
-  }, [openLoginDialog, searchParams])
+    // Consume the flag so the dialog does not re-open on later renders/navigation.
+    setSearchParams({}, { replace: true })
+  }, [openLoginDialog, searchParams, setSearchParams])
 
   return (
     <Box sx={{ bgcolor: 'background.default', color: 'text.primary' }}>

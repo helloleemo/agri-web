@@ -47,6 +47,14 @@ export async function handleResponse<T>(res: Response): Promise<T> {
   const json = payload as Partial<API_RESPONSE<T>> | null
 
   if (!res.ok) {
+    // Handle authentication failures
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('authUser')
+      window.location.href = '/#/'
+      return undefined as T
+    }
+
     const messageFromPayload =
       typeof json?.message === 'string'
         ? json.message
@@ -55,11 +63,13 @@ export async function handleResponse<T>(res: Response): Promise<T> {
           : `HTTP ${res.status}: ${res.statusText}`
 
     const statusCode =
-      typeof json?.statusCode === 'string'
-        ? json.statusCode
-        : typeof json?.status_code === 'string'
-          ? json.status_code
-          : ''
+      typeof json?.code === 'string'
+        ? json.code
+        : typeof json?.statusCode === 'string'
+          ? json.statusCode
+          : typeof json?.status_code === 'string'
+            ? json.status_code
+            : ''
     const error = new ApiError(statusCode, messageFromPayload, res.status)
 
     globalApiErrorHandler?.(error)
@@ -70,11 +80,13 @@ export async function handleResponse<T>(res: Response): Promise<T> {
   // 200 + false
   if (json && typeof json.success === 'boolean' && !json.success) {
     const statusCode =
-      typeof json.statusCode === 'string'
-        ? json.statusCode
-        : typeof json.status_code === 'string'
-          ? json.status_code
-          : 'E000000'
+      typeof json.code === 'string'
+        ? json.code
+        : typeof json.statusCode === 'string'
+          ? json.statusCode
+          : typeof json.status_code === 'string'
+            ? json.status_code
+            : 'E000000'
     const message = typeof json.message === 'string' ? json.message : 'Unknown API error'
     const error = new ApiError(statusCode, message, res.status)
 

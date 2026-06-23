@@ -1,6 +1,7 @@
 interface API_RESPONSE<T> {
   success: boolean
   message: string
+  code?: string
   statusCode?: string
   status_code?: string
   data?: T
