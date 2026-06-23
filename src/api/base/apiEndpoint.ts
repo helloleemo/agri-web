@@ -18,6 +18,7 @@ export const API_ENDPOINT = {
   // users
   USERS: '/users',
   USERS_ID: (id: string) => `/users/${id}`,
+  USERS_CHANGE_PASSWORD: (id: string) => `/users/${id}/password`,
 
   // orders
   ORDERS: '/orders',

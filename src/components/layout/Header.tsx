@@ -24,6 +24,7 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
   const [showHeaderBackground, setShowHeaderBackground] = useState(true)
   const [isHeaderHovered, setIsHeaderHovered] = useState(false)
   const [orderMenuAnchor, setOrderMenuAnchor] = useState<null | HTMLElement>(null)
+  const [memberMenuAnchor, setMemberMenuAnchor] = useState<null | HTMLElement>(null)
   const lastScrollYRef = useRef(0)
 
   useEffect(() => {
@@ -69,6 +70,20 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
     setOrderMenuAnchor(null)
   }
 
+  const handleMemberMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMemberMenuAnchor(event.currentTarget)
+  }
+
+  const handleMemberMenuClose = () => {
+    setMemberMenuAnchor(null)
+  }
+
+  const handleChangePasswordClick = () => {
+    handleMemberMenuClose()
+    setIsMobileMenuOpen(false)
+    navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.account.changePassword}`)
+  }
+
   const handleNavigateToOrderQuery = () => {
     navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.query}`)
     handleOrderMenuClose()
@@ -79,6 +94,43 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
       navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.history}`)
     }
     handleOrderMenuClose()
+  }
+
+  const desktopNavButtonSx = {
+    color: 'inherit',
+    textTransform: 'none',
+    px: 1,
+    minWidth: 'auto',
+    opacity: 0.9,
+    transition: 'opacity 180ms ease',
+    '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', opacity: 1 },
+  }
+
+  const mobileNavButtonSx = {
+    color: 'inherit',
+    textTransform: 'none',
+    justifyContent: 'flex-start',
+    py: 1,
+    px: 0,
+    opacity: 0.92,
+    transition: 'opacity 180ms ease',
+    '&:hover': { backgroundColor: 'transparent', opacity: 1 },
+  }
+
+  const menuPaperSx = {
+    backgroundColor: '#ffffff',
+    color: '#183126',
+    minWidth: 220,
+    boxShadow: '0 16px 40px rgba(9, 21, 19, 0.18)',
+    border: '1px solid rgba(24, 49, 38, 0.12)',
+    borderRadius: 1.5,
+  }
+
+  const menuItemSx = {
+    fontSize: '0.92rem',
+    '&:hover': {
+      backgroundColor: 'rgba(24, 49, 38, 0.08)',
+    },
   }
 
   return (
@@ -139,36 +191,27 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
               if (item.label === '訂單查詢') {
                 return (
                   <Box key={item.label}>
-                    <Typography
-                      onClick={handleOrderMenuOpen}
-                      variant="body2"
-                      component="span"
-                      sx={{
-                        cursor: 'pointer',
-                        opacity: 0.9,
-                        transition: 'opacity 180ms ease',
-                        '&:hover': { opacity: 1 },
-                      }}
-                    >
+                    <Button onClick={handleOrderMenuOpen} sx={desktopNavButtonSx}>
                       {item.label}
-                    </Typography>
+                    </Button>
                     <Menu
                       anchorEl={orderMenuAnchor}
                       open={Boolean(orderMenuAnchor)}
                       onClose={handleOrderMenuClose}
                       slotProps={{
                         paper: {
-                          sx: {
-                            backgroundColor: 'rgba(24, 49, 38, 0.95)',
-                            backdropFilter: 'blur(8px)',
-                            color: 'rgba(244, 237, 223, 0.95)',
-                            minWidth: 220,
-                          },
+                          sx: menuPaperSx,
                         },
                       }}
                     >
-                      <MenuItem onClick={handleNavigateToOrderQuery}>用訂單編號查詢</MenuItem>
-                      <MenuItem onClick={handleNavigateToOrderHistory} disabled={!isAuthenticated}>
+                      <MenuItem onClick={handleNavigateToOrderQuery} sx={menuItemSx}>
+                        用訂單編號查詢
+                      </MenuItem>
+                      <MenuItem
+                        onClick={handleNavigateToOrderHistory}
+                        disabled={!isAuthenticated}
+                        sx={menuItemSx}
+                      >
                         查詢個人歷史訂單
                       </MenuItem>
                     </Menu>
@@ -177,17 +220,11 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
               }
 
               return (
-                <Box
+                <Button
                   key={item.label}
                   component={RouterLink}
                   to={item.link}
-                  sx={{
-                    color: 'inherit',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    opacity: 0.9,
-                    transition: 'opacity 180ms ease, transform 180ms ease',
-                  }}
+                  sx={desktopNavButtonSx}
                 >
                   <Badge
                     color="error"
@@ -206,34 +243,36 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
                       },
                     }}
                   >
-                    <Typography variant="body2" component="span">
+                    <Typography variant="body2" component="span" sx={{ textDecoration: 'none' }}>
                       {item.label}
                     </Typography>
                   </Badge>
-                </Box>
+                </Button>
               )
             })}
 
             {isAuthenticated ? (
               <>
-                <Typography variant="body2" sx={{ opacity: 0.78 }}>
+                <Button onClick={handleMemberMenuOpen} sx={desktopNavButtonSx}>
                   {user?.user_name}
-                </Typography>
-                <Box
-                  component={RouterLink}
-                  to={`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.history}`}
-                  sx={{
-                    color: 'inherit',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    opacity: 0.9,
-                    transition: 'opacity 180ms ease',
+                </Button>
+                <Menu
+                  anchorEl={memberMenuAnchor}
+                  open={Boolean(memberMenuAnchor)}
+                  onClose={handleMemberMenuClose}
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        ...menuPaperSx,
+                        minWidth: 180,
+                      },
+                    },
                   }}
                 >
-                  {/* <Typography variant="body2" component="span">
-                    我的訂單
-                  </Typography> */}
-                </Box>
+                  <MenuItem onClick={handleChangePasswordClick} sx={menuItemSx}>
+                    更改密碼
+                  </MenuItem>
+                </Menu>
                 <Button
                   variant="outlined"
                   color="inherit"
@@ -283,21 +322,17 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
             if (item.label === '訂單查詢') {
               return (
                 <Box key={item.label}>
-                  <Box
+                  <Button
                     onClick={() => setIsMobileOrderMenuOpen(!isMobileOrderMenuOpen)}
                     sx={{
-                      color: 'inherit',
-                      cursor: 'pointer',
-                      py: 1,
-                      opacity: 0.92,
-                      transition: 'opacity 180ms ease',
-                      '&:hover': { opacity: 1 },
+                      ...mobileNavButtonSx,
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      width: '100%',
                     }}
                   >
-                    <Typography variant="body1" component="span">
+                    <Typography variant="body1" component="span" sx={{ textDecoration: 'none' }}>
                       {item.label}
                     </Typography>
                     <Typography
@@ -311,32 +346,29 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
                     >
                       ▼
                     </Typography>
-                  </Box>
+                  </Button>
                   {isMobileOrderMenuOpen && (
                     <Stack
                       spacing={0.5}
                       sx={{ mt: 0.5, ml: 2, borderLeft: '2px solid rgba(255,255,255,0.2)', pl: 2 }}
                     >
-                      <Box
+                      <Button
                         onClick={() => {
                           navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.query}`)
                           setIsMobileMenuOpen(false)
                           setIsMobileOrderMenuOpen(false)
                         }}
-                        sx={{
-                          color: 'inherit',
-                          cursor: 'pointer',
-                          py: 1,
-                          opacity: 0.92,
-                          transition: 'opacity 180ms ease',
-                          '&:hover': { opacity: 1 },
-                        }}
+                        sx={mobileNavButtonSx}
                       >
-                        <Typography variant="body2" component="span">
+                        <Typography
+                          variant="body2"
+                          component="span"
+                          sx={{ textDecoration: 'none' }}
+                        >
                           用訂單編號查詢
                         </Typography>
-                      </Box>
-                      <Box
+                      </Button>
+                      <Button
                         onClick={() => {
                           if (isAuthenticated) {
                             navigate(`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.history}`)
@@ -345,18 +377,21 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
                           }
                         }}
                         sx={{
-                          color: 'inherit',
-                          cursor: isAuthenticated ? 'pointer' : 'not-allowed',
-                          py: 1,
+                          ...mobileNavButtonSx,
+                          justifyContent: 'flex-start',
                           opacity: isAuthenticated ? 0.92 : 0.4,
-                          transition: 'opacity 180ms ease',
                           '&:hover': { opacity: isAuthenticated ? 1 : 0.4 },
                         }}
+                        disabled={!isAuthenticated}
                       >
-                        <Typography variant="body2" component="span">
+                        <Typography
+                          variant="body2"
+                          component="span"
+                          sx={{ textDecoration: 'none' }}
+                        >
                           查詢個人歷史訂單
                         </Typography>
-                      </Box>
+                      </Button>
                     </Stack>
                   )}
                 </Box>
@@ -364,20 +399,12 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
             }
 
             return (
-              <Box
+              <Button
                 key={item.label}
                 component={RouterLink}
                 to={item.link}
                 onClick={() => setIsMobileMenuOpen(false)}
-                sx={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  py: 1,
-                  opacity: 0.92,
-                  transition: 'opacity 180ms ease',
-                  '&:hover': { opacity: 1 },
-                }}
+                sx={mobileNavButtonSx}
               >
                 <Badge
                   color="error"
@@ -393,37 +420,34 @@ const Header = ({ alwaysSolidBackground = false }: HeaderProps) => {
                     },
                   }}
                 >
-                  <Typography variant="body1" component="span">
+                  <Typography variant="body1" component="span" sx={{ textDecoration: 'none' }}>
                     {item.label}
                   </Typography>
                 </Badge>
-              </Box>
+              </Button>
             )
           })}
 
           {isAuthenticated ? (
             <>
-              <Box
+              <Button
                 component={RouterLink}
                 to={`/${PATHS.mekarang.root}/${PATHS.mekarang.orders.history}`}
                 onClick={() => setIsMobileMenuOpen(false)}
-                sx={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  py: 1,
-                  opacity: 0.92,
-                  transition: 'opacity 180ms ease',
-                  '&:hover': { opacity: 1 },
-                }}
+                sx={mobileNavButtonSx}
               >
-                <Typography variant="body1" component="span">
+                <Typography variant="body1" component="span" sx={{ textDecoration: 'none' }}>
                   我的訂單
                 </Typography>
-              </Box>
+              </Button>
               <Typography variant="body2" sx={{ py: 1, opacity: 0.78 }}>
                 已登入為 {user?.user_name}
               </Typography>
+              <Button onClick={handleChangePasswordClick} sx={mobileNavButtonSx}>
+                <Typography variant="body1" component="span" sx={{ textDecoration: 'none' }}>
+                  更改密碼
+                </Typography>
+              </Button>
               <Button
                 variant="outlined"
                 color="inherit"

@@ -35,3 +35,8 @@ export interface UserUpdatePayload {
   password?: string
   role_code?: RoleCode
 }
+
+export interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+}

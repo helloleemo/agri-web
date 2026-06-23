@@ -12,6 +12,7 @@ import OrdersPaymentPage from '@/pages/$mekarang/$orders/$payment/OrdersPaymentP
 import OrdersCompletePage from '@/pages/$mekarang/$orders/$complete/OrdersCompletePage'
 import OrdersQueryPage from '@/pages/$mekarang/$orders/OrdersQueryPage'
 import OrdersHistoryPage from '@/pages/$mekarang/OrdersHistoryPage'
+import ChangePasswordPage from '@/pages/$mekarang/ChangePasswordPage'
 import LoginPage from '@/pages/$auth/$login/LoginPage'
 import RegisterPage from '../pages/$auth/$register/RegisterPage'
 import VerifyEmailPage from '../pages/$auth/$verify-email/VerifyEmailPage'
@@ -84,6 +85,10 @@ const router = createHashRouter([
       {
         path: PATHS.mekarang.orders.history,
         element: <OrdersHistoryPage />,
+      },
+      {
+        path: PATHS.mekarang.account.changePassword,
+        element: <ChangePasswordPage />,
       },
       {
         index: true,
