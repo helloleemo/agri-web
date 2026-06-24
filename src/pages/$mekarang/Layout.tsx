@@ -12,25 +12,29 @@ const defaultBannerImage =
 
 const Layout = () => {
   const [bannerImage, setBannerImage] = useState(defaultBannerImage)
+  const [footerContent, setFooterContent] = useState<HomePageContent['footer'] | null>(null)
   const navigation = useNavigation()
   const productsListPath = `/${PATHS.mekarang.root}/${PATHS.mekarang.products.root}`
   const isProductsListLoading =
     navigation.state === 'loading' && navigation.location?.pathname === productsListPath
 
   useEffect(() => {
-    const loadBannerImage = async () => {
+    const loadSiteContent = async () => {
       try {
         const data = await siteContentService.getPublicByPageKey<HomePageContent>(HOME_PAGE_KEY)
         const managedImage = data.content_data?.mekarang?.banner_image_url?.trim()
         if (managedImage) {
           setBannerImage(managedImage)
         }
+        if (data.content_data?.footer) {
+          setFooterContent(data.content_data.footer)
+        }
       } catch {
-        // Keep fallback banner when API is unavailable.
+        // Keep fallback content when API is unavailable.
       }
     }
 
-    void loadBannerImage()
+    void loadSiteContent()
   }, [])
 
   return (
@@ -63,7 +67,12 @@ const Layout = () => {
           pt: 10,
         }}
       >
-        <Footer />
+        <Footer
+          title={footerContent?.title}
+          description={footerContent?.description}
+          buttonText={footerContent?.button_text}
+          socialLinks={footerContent?.social_links}
+        />
       </Box>
     </Box>
   )
