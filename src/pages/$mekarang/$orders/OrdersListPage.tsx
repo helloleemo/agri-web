@@ -99,6 +99,10 @@ const OrdersListPage = () => {
   const [couponMessage, setCouponMessage] = useState('')
   const [isCheckingCoupon, setIsCheckingCoupon] = useState(false)
 
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items],

@@ -483,10 +483,7 @@ const ProductInfoPage = () => {
 
       <Box sx={{ py: { xs: 8, md: 10 } }}>
         <Container sx={{ textAlign: 'center' }}>
-          <Typography
-            variant="h3"
-            sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}
-          >
+          <Typography variant="h3" sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}>
             {pageContent.flow.title}
           </Typography>
           <Grid container spacing={4} sx={{ mt: { xs: 5, md: 8 } }}>

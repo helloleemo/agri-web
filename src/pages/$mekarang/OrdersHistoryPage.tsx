@@ -70,6 +70,10 @@ const OrdersHistoryPage = () => {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate(`/${PATHS.auth.root}/${PATHS.auth.login}`, { replace: true })
       return
