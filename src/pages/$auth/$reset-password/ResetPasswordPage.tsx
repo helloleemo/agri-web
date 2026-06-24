@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
-import { Link as RouterLink, useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { authService } from '@/api'
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const initialToken = useMemo(() => searchParams.get('token') ?? '', [searchParams])
 
   const [token, setToken] = useState(initialToken)
@@ -39,9 +40,7 @@ const ResetPasswordPage = () => {
         new_password: newPassword,
       })
 
-      setSuccessMessage('密碼已重設完成，請使用新密碼重新登入。')
-      setNewPassword('')
-      setConfirmPassword('')
+      navigate('/auth/login', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : '重設密碼失敗，請重新取得重設連結')
     } finally {

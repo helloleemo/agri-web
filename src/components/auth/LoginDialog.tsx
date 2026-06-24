@@ -227,7 +227,7 @@ const LoginDialog = () => {
           >
             {mode === 'login' ? (
               <Button
-                variant="text"
+                variant="outlined"
                 sx={{
                   textAlign: 'center',
                   mx: 'auto',
@@ -241,7 +241,6 @@ const LoginDialog = () => {
                 返回登入
               </Button>
             )}
-
             {mode === 'login' ? (
               <Button
                 component={RouterLink}
