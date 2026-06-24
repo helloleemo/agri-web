@@ -478,10 +478,14 @@ const ProductInfoPage = () => {
           <Typography sx={{ maxWidth: 700, mx: 'auto', color: 'text.secondary', lineHeight: 1.9 }}>
             {pageContent.product_detail.intro.description}
           </Typography>
+        </Container>
+      </Box>
 
+      <Box sx={{ py: { xs: 8, md: 10 } }}>
+        <Container sx={{ textAlign: 'center' }}>
           <Typography
             variant="h3"
-            sx={{ mt: { xs: 5, md: 8 }, mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}
+            sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}
           >
             {pageContent.flow.title}
           </Typography>
@@ -514,23 +518,6 @@ const ProductInfoPage = () => {
               </Grid>
             ))}
           </Grid>
-        </Container>
-      </Box>
-
-      <Box
-        sx={{
-          py: { xs: 8, md: 12 },
-          textAlign: 'center',
-          bgcolor: '#f5f7f8',
-        }}
-      >
-        <Container>
-          <Typography variant="h3" sx={{ mb: 2, fontSize: { xs: '1.7rem', md: '2rem' } }}>
-            {pageContent.product_detail.bottom_cta.title}
-          </Typography>
-          <Typography sx={{ maxWidth: 700, mx: 'auto', color: 'text.secondary', lineHeight: 1.9 }}>
-            {pageContent.product_detail.bottom_cta.description}
-          </Typography>
         </Container>
       </Box>
 
