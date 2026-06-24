@@ -71,6 +71,7 @@ const Layout = () => {
           title={footerContent?.title}
           description={footerContent?.description}
           buttonText={footerContent?.button_text}
+          buttonLink={footerContent?.button_link}
           socialLinks={footerContent?.social_links}
         />
       </Box>
