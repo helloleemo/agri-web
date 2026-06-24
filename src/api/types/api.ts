@@ -4,7 +4,7 @@ interface API_RESPONSE<T> {
   code?: string
   statusCode?: string
   status_code?: string
-  detail?: string
+  detail?: unknown
   data?: T
 }
 
@@ -12,9 +12,9 @@ export class ApiError extends Error {
   public statusCode: string
   public message: string
   public status?: number
-  public detail?: string
+  public detail?: unknown
 
-  constructor(statusCode: string, message: string, status?: number, detail?: string) {
+  constructor(statusCode: string, message: string, status?: number, detail?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.statusCode = statusCode

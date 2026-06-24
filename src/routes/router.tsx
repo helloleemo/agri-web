@@ -17,6 +17,8 @@ import LoginPage from '@/pages/$auth/$login/LoginPage'
 import RegisterPage from '../pages/$auth/$register/RegisterPage'
 import VerifyEmailPage from '../pages/$auth/$verify-email/VerifyEmailPage'
 import ResendVerificationEmailPage from '../pages/$auth/$resend-verification-email/ResendVerificationEmailPage'
+import ForgotPasswordPage from '../pages/$auth/$forgot-password/ForgotPasswordPage'
+import ResetPasswordPage from '../pages/$auth/$reset-password/ResetPasswordPage'
 import MainPage from '@/pages/$index/MainPage'
 
 const router = createHashRouter([
@@ -42,6 +44,14 @@ const router = createHashRouter([
       {
         path: PATHS.auth.resendVerificationEmail,
         element: <ResendVerificationEmailPage />,
+      },
+      {
+        path: PATHS.auth.forgotPassword,
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: PATHS.auth.resetPassword,
+        element: <ResetPasswordPage />,
       },
     ],
   },

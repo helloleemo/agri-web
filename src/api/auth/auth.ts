@@ -2,10 +2,12 @@ import BASE_URL from '../base/apiBaseUrl'
 import { API_ENDPOINT } from '../base/apiEndpoint'
 import { GET, POST } from '../base/apiMethods'
 import type {
+  ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
   ResendVerificationEmailRequest,
   TokenResponse,
   VerifyEmailRequest,
@@ -24,6 +26,12 @@ export const authService = {
   },
   resendVerificationEmail: async (payload: ResendVerificationEmailRequest) => {
     return POST<RegisterResponse | null>(BASE_URL, API_ENDPOINT.RESEND_VERIFICATION_EMAIL, payload)
+  },
+  forgotPassword: async (payload: ForgotPasswordRequest) => {
+    return POST<void>(BASE_URL, API_ENDPOINT.FORGOT_PASSWORD, payload)
+  },
+  resetPassword: async (payload: ResetPasswordRequest) => {
+    return POST<void>(BASE_URL, API_ENDPOINT.RESET_PASSWORD, payload)
   },
   me: async () => {
     return GET<LoginResponse['user']>(BASE_URL, API_ENDPOINT.GET_USER_INFO)

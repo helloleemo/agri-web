@@ -227,8 +227,6 @@ const LoginDialog = () => {
           >
             {mode === 'login' ? (
               <Button
-                // component={RouterLink}
-                // to="/auth/resend-verification-email"
                 variant="text"
                 sx={{
                   textAlign: 'center',
@@ -243,6 +241,21 @@ const LoginDialog = () => {
                 返回登入
               </Button>
             )}
+
+            {mode === 'login' ? (
+              <Button
+                component={RouterLink}
+                to="/auth/forgot-password"
+                variant="text"
+                sx={{
+                  textAlign: 'center',
+                  mx: 'auto',
+                }}
+                onClick={handleClose}
+              >
+                忘記密碼？
+              </Button>
+            ) : null}
 
             {/* <Button
               component={RouterLink}

@@ -1,10 +1,61 @@
 import { ApiError, type API_RESPONSE, type ApiErrorHolder, type RequestParams } from '../types/api'
 import { getAccessToken } from '../utils'
 
+type ValidationIssue = {
+  type?: string
+  loc?: Array<string | number>
+  msg?: string
+  ctx?: Record<string, unknown>
+}
+
 let globalApiErrorHandler: ApiErrorHolder | undefined
 
 const setApiErrorHandler = (handler?: ApiErrorHolder) => {
   globalApiErrorHandler = handler
+}
+
+const getValidationMessage = (detail: unknown): string | null => {
+  if (!Array.isArray(detail)) {
+    return null
+  }
+
+  const issues = detail as ValidationIssue[]
+  for (const issue of issues) {
+    const field = issue.loc?.[1]
+
+    if (field === 'password' && issue.type === 'string_too_short') {
+      const minLength =
+        typeof issue.ctx?.min_length === 'number' ? issue.ctx.min_length : String(issue.ctx?.min_length || '')
+      return `密碼長度至少需要 ${minLength} 個字元。`
+    }
+  }
+
+  if (issues.length > 0 && typeof issues[0]?.msg === 'string' && issues[0].msg.trim()) {
+    return '輸入資料格式不正確，請檢查後再試。'
+  }
+
+  return null
+}
+
+const localizeAuthErrorMessage = (
+  statusCode: string,
+  status: number,
+  message: string,
+  detail: unknown,
+): string => {
+  if (
+    statusCode === 'USER_INVALID_CREDENTIALS' ||
+    /invalid email or password/i.test(message) ||
+    (typeof detail === 'string' && /invalid email or password/i.test(detail))
+  ) {
+    return '帳號或密碼錯誤，請重新輸入。'
+  }
+
+  if (status === 422) {
+    return getValidationMessage(detail) ?? '輸入資料格式不正確，請檢查後再試。'
+  }
+
+  return message
 }
 
 const createHeader = () => {
@@ -79,7 +130,14 @@ export async function handleResponse<T>(res: Response): Promise<T> {
           ? payload
           : `HTTP ${res.status}: ${res.statusText}`
 
-    const error = new ApiError(statusCode, messageFromPayload, res.status, json?.detail)
+    const localizedMessage = localizeAuthErrorMessage(
+      statusCode,
+      res.status,
+      messageFromPayload,
+      json?.detail,
+    )
+
+    const error = new ApiError(statusCode, localizedMessage, res.status, json?.detail)
 
     globalApiErrorHandler?.(error)
 
@@ -102,7 +160,8 @@ export async function handleResponse<T>(res: Response): Promise<T> {
         : typeof json.message === 'string'
           ? json.message
           : 'Unknown API error'
-    const error = new ApiError(statusCode, message, res.status, json.detail)
+    const localizedMessage = localizeAuthErrorMessage(statusCode, res.status, message, json.detail)
+    const error = new ApiError(statusCode, localizedMessage, res.status, json.detail)
 
     globalApiErrorHandler?.(error)
 

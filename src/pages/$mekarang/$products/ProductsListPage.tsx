@@ -88,11 +88,12 @@ const ProductsListPage = () => {
   }
 
   const categories = ['全部', ...Array.from(new Set(products.map(toCategoryLabel)))]
+  const enabledProducts = products.filter((product) => product.status_code == 1)
 
   const filteredProducts =
     activeCategory === '全部'
-      ? products
-      : products.filter((product) => toCategoryLabel(product) === activeCategory)
+      ? enabledProducts
+      : enabledProducts.filter((product) => toCategoryLabel(product) === activeCategory)
 
   return (
     <Box component="main" sx={{ py: { xs: 5, md: 7 } }}>
@@ -153,6 +154,8 @@ const ProductsListPage = () => {
           <Grid container spacing={3.5}>
             {filteredProducts.map((product, index) =>
               (() => {
+                // console.log('product', product)
+                // if (product.status_code !== 1) return null
                 const selectedUnitId =
                   selectedUnitMap[product.id] ?? product.units[0]?.unit_id ?? ''
                 const selectedUnit = product.units.find((unit) => unit.unit_id === selectedUnitId)
