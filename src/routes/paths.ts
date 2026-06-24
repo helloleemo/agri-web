@@ -6,6 +6,8 @@ const PATHS = {
     register: 'register',
     verifyEmail: 'verify-email',
     resendVerificationEmail: 'resend-verification-email',
+    forgotPassword: 'forgot-password',
+    resetPassword: 'reset-password',
   },
   mekarang: {
     root: 'mekarang',

@@ -21,6 +21,8 @@ export type {
 	VerifyEmailRequest,
 	VerifyEmailResponse,
 	ResendVerificationEmailRequest,
+	ForgotPasswordRequest,
+	ResetPasswordRequest,
 } from './types/auth'
 export type { ProductResponse, ProductCreatePayload, ProductUpdatePayload } from './types/product'
 export type { CouponResponse } from './types/coupon'

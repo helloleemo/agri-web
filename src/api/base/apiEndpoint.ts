@@ -6,6 +6,8 @@ export const API_ENDPOINT = {
   REGISTER: '/auth/register',
   VERIFY_EMAIL: '/auth/verify-email',
   RESEND_VERIFICATION_EMAIL: '/auth/resend-verification-email',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
 
   // products
   PRODUCTS: '/products',
