@@ -11,6 +11,7 @@ export interface CartItem {
   unit: string
   unitPrice: number
   quantity: number
+  availableStock?: number
   image: string
 }
 
@@ -79,6 +80,11 @@ const readStoredItems = (): CartItem[] => {
         return {
           ...candidate,
           unit_id: unitId,
+          availableStock:
+            typeof candidate.availableStock === 'number' &&
+            Number.isFinite(candidate.availableStock)
+              ? Math.max(0, Math.floor(candidate.availableStock))
+              : undefined,
         } as CartItem
       })
       .filter((item): item is CartItem => item !== null)
@@ -133,28 +139,73 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems((prev) => {
       const existingIndex = prev.findIndex((current) => current.id === item.id)
       if (existingIndex === -1) {
-        return [...prev, item]
+        const normalizedQuantity = Math.max(1, Math.floor(item.quantity))
+        const maxQuantity =
+          typeof item.availableStock === 'number'
+            ? Math.max(0, Math.floor(item.availableStock))
+            : Number.POSITIVE_INFINITY
+
+        return [
+          ...prev,
+          {
+            ...item,
+            quantity: Math.min(normalizedQuantity, maxQuantity),
+          },
+        ]
       }
 
-      return prev.map((current, index) =>
-        index === existingIndex
-          ? {
-              ...current,
-              quantity: current.quantity + item.quantity,
-            }
-          : current,
-      )
+      return prev.map((current, index) => {
+        if (index !== existingIndex) {
+          return current
+        }
+
+        const nextAvailableStock =
+          typeof item.availableStock === 'number'
+            ? Math.max(0, Math.floor(item.availableStock))
+            : current.availableStock
+        const maxQuantity =
+          typeof nextAvailableStock === 'number'
+            ? Math.max(1, nextAvailableStock)
+            : Number.POSITIVE_INFINITY
+
+        return {
+          ...current,
+          availableStock: nextAvailableStock,
+          quantity: Math.min(current.quantity + item.quantity, maxQuantity),
+        }
+      })
     })
   }
 
   const replaceWithSingleItem = (item: CartItem) => {
-    setItems([item])
+    const maxQuantity =
+      typeof item.availableStock === 'number'
+        ? Math.max(1, Math.floor(item.availableStock))
+        : Number.POSITIVE_INFINITY
+
+    setItems([
+      {
+        ...item,
+        quantity: Math.min(Math.max(1, Math.floor(item.quantity)), maxQuantity),
+      },
+    ])
   }
 
   const updateItemQuantity = (id: string, nextQuantity: number) => {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(1, nextQuantity) } : item,
+        item.id === id
+          ? {
+              ...item,
+              quantity:
+                typeof item.availableStock === 'number'
+                  ? Math.max(
+                      1,
+                      Math.min(nextQuantity, Math.max(1, Math.floor(item.availableStock))),
+                    )
+                  : Math.max(1, nextQuantity),
+            }
+          : item,
       ),
     )
   }

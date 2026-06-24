@@ -47,7 +47,7 @@ const pickPrice = (product: ProductResponse) => {
 }
 
 const ProductsListPage = () => {
-  const { addItem } = useCart()
+  const { items, addItem } = useCart()
   const { showSnackbar } = useAppSnackbar()
   const { products, errorMessage } = useLoaderData() as ProductListLoaderData
   const [activeCategory, setActiveCategory] = useState<string>('全部')
@@ -73,15 +73,30 @@ const ProductsListPage = () => {
       return
     }
 
+    if (selectedUnit.stock <= 0) {
+      showSnackbar(`${product.name} 已售完`, { severity: 'warning' })
+      return
+    }
+
+    const cartItemId = `${product.id}-${selectedUnit.unit_id}`
+    const existingQuantity = items.find((item) => item.id === cartItemId)?.quantity ?? 0
+    if (existingQuantity >= selectedUnit.stock) {
+      showSnackbar(`${product.name} 已達可購買上限（庫存 ${selectedUnit.stock}）`, {
+        severity: 'warning',
+      })
+      return
+    }
+
     try {
       addItem({
-        id: `${product.id}-${selectedUnit.unit_id}`,
+        id: cartItemId,
         name: product.name,
         description: product.description || '此商品目前尚未提供詳細描述。',
         unit_id: selectedUnit.unit_id,
         unit: selectedUnit.unit_name || '規格未命名',
         unitPrice: selectedUnit.price,
         quantity: 1,
+        availableStock: selectedUnit.stock,
         image: pickImage(product),
       })
 
@@ -164,6 +179,8 @@ const ProductsListPage = () => {
                   selectedUnitMap[product.id] ?? product.units[0]?.unit_id ?? ''
                 const selectedUnit = product.units.find((unit) => unit.unit_id === selectedUnitId)
                 const displayPrice = selectedUnit?.price ?? pickPrice(product)
+                const hasAvailableUnits = product.units.length > 0
+                const isSelectedUnitSoldOut = (selectedUnit?.stock ?? 0) <= 0
 
                 return (
                   <Grid key={`${activeCategory}-${product.id}`} size={{ xs: 12, md: 6 }}>
@@ -212,11 +229,21 @@ const ProductsListPage = () => {
                           <Typography variant="h5" sx={{ fontSize: '1.35rem', fontWeight: 700 }}>
                             {product.name}
                           </Typography>
-                          <Typography
-                            sx={{ color: 'primary.main', fontSize: '1.6rem', fontWeight: 500 }}
-                          >
-                            $ {displayPrice}
-                          </Typography>
+                          <Stack direction="row" spacing={1.2} sx={{ alignItems: 'center' }}>
+                            <Typography
+                              sx={{ color: 'primary.main', fontSize: '1.6rem', fontWeight: 500 }}
+                            >
+                              $ {displayPrice}
+                            </Typography>
+                            {isSelectedUnitSoldOut && (
+                              <Chip
+                                size="small"
+                                color="error"
+                                label="已售完"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            )}
+                          </Stack>
                         </Stack>
                         <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3, lineHeight: 1.9 }}>
                           {product.description || '尚未提供商品描述。'}
@@ -240,8 +267,13 @@ const ProductsListPage = () => {
                                 <MenuItem value="">暫無可選規格</MenuItem>
                               ) : (
                                 product.units.map((unit) => (
-                                  <MenuItem key={unit.unit_id} value={unit.unit_id}>
-                                    {(unit.unit_name || '規格未命名') + `（$ ${unit.price}）`}
+                                  <MenuItem
+                                    key={unit.unit_id}
+                                    value={unit.unit_id}
+                                    disabled={unit.stock <= 0}
+                                  >
+                                    {(unit.unit_name || '規格未命名') +
+                                      `（$ ${unit.price}）${unit.stock <= 0 ? ' - 已售完' : ''}`}
                                   </MenuItem>
                                 ))
                               )}
@@ -261,9 +293,9 @@ const ProductsListPage = () => {
                             fullWidth
                             variant="contained"
                             onClick={() => handleAddToCart(product)}
-                            disabled={product.units.length === 0}
+                            disabled={!hasAvailableUnits || isSelectedUnitSoldOut}
                           >
-                            加入購物車
+                            {isSelectedUnitSoldOut ? '已售完' : '加入購物車'}
                           </Button>
                         </Stack>
                       </CardContent>

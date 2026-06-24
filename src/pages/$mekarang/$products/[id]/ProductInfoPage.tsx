@@ -126,7 +126,7 @@ const orderStepIcons = [
 const ProductInfoPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { addItem, replaceWithSingleItem } = useCart()
+  const { items, addItem, replaceWithSingleItem } = useCart()
   const { showSnackbar } = useAppSnackbar()
   const [product, setProduct] = useState<ProductResponse | null>(null)
   const [pageContent, setPageContent] = useState<ProductDetailPageContent>(
@@ -207,6 +207,8 @@ const ProductInfoPage = () => {
     () => product?.units.find((unit) => unit.unit_id === selectedUnitId) ?? product?.units[0],
     [product, selectedUnitId],
   )
+  const isSelectedUnitSoldOut = (selectedUnit?.stock ?? 0) <= 0
+  const maxSelectableQuantity = Math.max(1, Math.min(5, selectedUnit?.stock ?? 1))
 
   const displayPrice = selectedUnit?.price ?? 0
 
@@ -223,21 +225,57 @@ const ProductInfoPage = () => {
     [pageContent.flow.items],
   )
 
+  useEffect(() => {
+    if (!product) {
+      return
+    }
+
+    const quantityNumber = Number(quantity) || 1
+    if (quantityNumber <= maxSelectableQuantity) {
+      return
+    }
+
+    setSelectionMap((prev) => ({
+      ...prev,
+      [product.id]: {
+        unitId: prev[product.id]?.unitId ?? product.units[0]?.unit_id ?? '',
+        quantity: String(maxSelectableQuantity),
+        activeImageIndex: prev[product.id]?.activeImageIndex ?? 0,
+      },
+    }))
+  }, [product, quantity, maxSelectableQuantity])
+
   const gotoOrderFlow = (mode: 'addToCart' | 'buyNow') => {
     if (!product || !selectedUnit) {
       showSnackbar('商品資料尚未完整，請稍後再試', { severity: 'warning' })
       return
     }
 
+    if (selectedUnit.stock <= 0) {
+      showSnackbar(`${product.name} 已售完`, { severity: 'warning' })
+      return
+    }
+
     const itemQuantity = Number(quantity) || 1
+    const cartItemId = `${product.id}-${selectedUnit.unit_id}`
+    const existingQuantity = items.find((item) => item.id === cartItemId)?.quantity ?? 0
+
+    if (mode === 'addToCart' && existingQuantity + itemQuantity > selectedUnit.stock) {
+      showSnackbar(`${product.name} 庫存不足，購物車最多可有 ${selectedUnit.stock} 件`, {
+        severity: 'warning',
+      })
+      return
+    }
+
     const cartItem = {
-      id: `${product.id}-${selectedUnit.unit_id}`,
+      id: cartItemId,
       name: product.name,
       description: displayDescription,
       unit_id: selectedUnit.unit_id,
       unit: selectedUnit.unit_name || '規格未命名',
       unitPrice: selectedUnit.price,
       quantity: itemQuantity,
+      availableStock: selectedUnit.stock,
       image: activeImage,
     }
 
@@ -427,8 +465,9 @@ const ProductInfoPage = () => {
                   onChange={(event) => handleVariantChange(event.target.value)}
                 >
                   {product.units.map((item) => (
-                    <MenuItem key={item.unit_id} value={item.unit_id}>
-                      {(item.unit_name || '規格未命名') + `（$ ${item.price}）`}
+                    <MenuItem key={item.unit_id} value={item.unit_id} disabled={item.stock <= 0}>
+                      {(item.unit_name || '規格未命名') +
+                        `（$ ${item.price}）${item.stock <= 0 ? ' - 已售完' : ''}`}
                     </MenuItem>
                   ))}
                 </Select>
@@ -438,8 +477,11 @@ const ProductInfoPage = () => {
                 <Select
                   value={quantity}
                   onChange={(event) => handleQuantityChange(event.target.value)}
+                  disabled={isSelectedUnitSoldOut}
                 >
-                  {['1', '2', '3', '4', '5'].map((item) => (
+                  {Array.from({ length: maxSelectableQuantity }, (_, index) =>
+                    String(index + 1),
+                  ).map((item) => (
                     <MenuItem key={item} value={item}>
                       {item} 件
                     </MenuItem>
@@ -447,22 +489,30 @@ const ProductInfoPage = () => {
                 </Select>
               </FormControl>
 
+              {isSelectedUnitSoldOut && (
+                <Typography sx={{ color: 'error.main', fontSize: '0.9rem', fontWeight: 700 }}>
+                  已售完
+                </Typography>
+              )}
+
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.8}>
                 <Button
                   fullWidth
                   variant="contained"
                   size="large"
                   onClick={() => gotoOrderFlow('addToCart')}
+                  disabled={isSelectedUnitSoldOut}
                 >
-                  加入購物車
+                  {isSelectedUnitSoldOut ? '已售完' : '加入購物車'}
                 </Button>
                 <Button
                   fullWidth
                   variant="outlined"
                   size="large"
                   onClick={() => gotoOrderFlow('buyNow')}
+                  disabled={isSelectedUnitSoldOut}
                 >
-                  直接購買
+                  {isSelectedUnitSoldOut ? '已售完' : '直接購買'}
                 </Button>
               </Stack>
             </Stack>
