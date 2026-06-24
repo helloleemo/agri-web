@@ -15,7 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link as RouterLink, useLoaderData } from 'react-router-dom'
 import { resolveApiAssetUrl } from '@/api/utils'
 import { useCart } from '@/contexts/CartContext'
@@ -52,6 +52,10 @@ const ProductsListPage = () => {
   const { products, errorMessage } = useLoaderData() as ProductListLoaderData
   const [activeCategory, setActiveCategory] = useState<string>('全部')
   const [selectedUnitMap, setSelectedUnitMap] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const handleUnitChange = (productId: string, unitId: string) => {
     setSelectedUnitMap((prev) => ({

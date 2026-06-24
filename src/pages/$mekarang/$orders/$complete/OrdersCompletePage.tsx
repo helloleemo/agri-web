@@ -500,7 +500,7 @@ const OrdersCompletePage = () => {
                       {item.product_name || `商品 ${item.product_id.slice(0, 8)}`}
                     </Typography>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.84rem' }}>
-                      商品編號：{item.product_id}
+                      {/* 商品編號：{item.product_id} */}
                     </Typography>
                   </Box>
                   <Typography sx={{ color: 'text.secondary' }}>

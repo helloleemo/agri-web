@@ -23,6 +23,10 @@ const OrdersQueryPage = () => {
   const [heroImage, setHeroImage] = useState(defaultHeroImage)
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     const loadOrdersQueryContent = async () => {
       try {
         const data = await siteContentService.getPublicByPageKey<HomePageContent>(HOME_PAGE_KEY)

@@ -192,6 +192,10 @@ const MainPage = () => {
   const [homeContent, setHomeContent] = useState<HomePageContent>(cloneDefaultContent)
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     if (searchParams.get('verified') !== 'success') {
       return
     }
