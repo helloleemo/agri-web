@@ -2,11 +2,13 @@ import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import { Box, Button, Container, IconButton, Stack, Typography } from '@mui/material'
+import { Link } from 'react-router-dom'
 
 type FooterProps = {
   title?: string
   description?: string
   buttonText?: string
+  buttonLink?: string
   socialLinks?: {
     facebook?: string
     instagram?: string
@@ -18,6 +20,7 @@ const Footer = ({
   title = '與我們保持聯繫',
   description = '分享料理靈感、農場日常與最新檔期。追蹤我們，第一時間收到新品上市與優惠資訊。',
   buttonText = '聯絡我們',
+  buttonLink,
   socialLinks,
 }: FooterProps) => {
   const iconItems = [
@@ -45,7 +48,12 @@ const Footer = ({
         <Typography sx={{ maxWidth: 680, mx: 'auto', opacity: 0.85, mb: 4, lineHeight: 1.85 }}>
           {description}
         </Typography>
-        <Button variant="outlined" sx={{ color: 'grey.50', borderColor: 'grey.300', px: 5, mb: 4 }}>
+        <Button
+          variant="outlined"
+          component={buttonLink ? Link : 'button'}
+          to={buttonLink ?? undefined}
+          sx={{ color: 'grey.50', borderColor: 'grey.300', px: 5, mb: 4 }}
+        >
           {buttonText}
         </Button>
         {iconItems.length ? (

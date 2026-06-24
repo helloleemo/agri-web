@@ -84,6 +84,7 @@ const defaultHomeContent: HomePageContent = {
   footer: {
     title: '與我們保持聯繫',
     button_text: '聯絡我們',
+    button_link: '/mekarang/products',
     description: '分享料理靈感、農場日常與最新檔期。追蹤我們，第一時間收到新品上市與優惠資訊。',
     social_links: {
       facebook: '',
@@ -145,6 +146,7 @@ const ensureHomeContent = (raw: unknown): HomePageContent => {
     footer: {
       title: content.footer?.title ?? fallback.footer.title,
       button_text: content.footer?.button_text ?? fallback.footer.button_text,
+      button_link: content.footer?.button_link ?? fallback.footer.button_link,
       description: content.footer?.description ?? fallback.footer.description,
       social_links: {
         facebook: content.footer?.social_links?.facebook ?? fallback.footer.social_links.facebook,
@@ -452,6 +454,7 @@ const MainPage = () => {
       <Footer
         title={homeContent.footer.title}
         buttonText={homeContent.footer.button_text}
+        buttonLink={homeContent.footer.button_link}
         description={homeContent.footer.description}
         socialLinks={homeContent.footer.social_links}
       />
