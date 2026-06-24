@@ -317,6 +317,9 @@ const OrdersListPage = () => {
         <Stack spacing={2.5} sx={{ mt: 2.5 }}>
           {items.map((item) => {
             const lineTotal = item.unitPrice * item.quantity
+            const maxQuantity =
+              typeof item.availableStock === 'number' ? Math.max(1, item.availableStock) : null
+            const isAtStockLimit = maxQuantity !== null && item.quantity >= maxQuantity
 
             return (
               <Stack
@@ -354,6 +357,11 @@ const OrdersListPage = () => {
                     <Typography sx={{ color: 'grey.600', mt: 0.4, fontSize: '0.84rem' }}>
                       單位：{item.unit}
                     </Typography>
+                    {typeof item.availableStock === 'number' && (
+                      <Typography sx={{ color: 'error.main', mt: 0.4, fontSize: '0.84rem' }}>
+                        可用庫存：{Math.max(0, item.availableStock)}
+                      </Typography>
+                    )}
                   </Stack>
                 </Stack>
 
@@ -379,6 +387,7 @@ const OrdersListPage = () => {
                   <IconButton
                     size="small"
                     onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                    disabled={isAtStockLimit}
                     sx={{ border: '1px solid', borderColor: 'grey.300', borderRadius: 1.5 }}
                   >
                     <Typography sx={{ fontWeight: 700, lineHeight: 1 }}>+</Typography>

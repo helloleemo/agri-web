@@ -44,6 +44,14 @@ const localizeAuthErrorMessage = (
   detail: unknown,
 ): string => {
   if (
+    statusCode === 'PRODUCT_OUT_OF_STOCK' ||
+    /insufficient available stock/i.test(message) ||
+    (typeof detail === 'string' && /insufficient available stock/i.test(detail))
+  ) {
+    return '庫存不足，請返回購物車調整商品數量後再送出訂單。'
+  }
+
+  if (
     statusCode === 'USER_INVALID_CREDENTIALS' ||
     /invalid email or password/i.test(message) ||
     (typeof detail === 'string' && /invalid email or password/i.test(detail))
